@@ -10,6 +10,8 @@ import AdminLayout from './layouts/AdminLayout';
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
@@ -38,8 +40,10 @@ function App() {
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
-        {/* Public Routes */}
+        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* User Routes */}

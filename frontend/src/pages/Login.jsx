@@ -21,20 +21,23 @@ const Login = () => {
     
     try {
       const response = await authService.login({ email, password });
-      const { accessToken } = response.data.data;
+      const { accessToken, idToken } = response.data.data;
       
-      const decoded = jwtDecode(accessToken);
+      // idToken contains cognito:groups and user attributes
+      // accessToken is used for API authorization
+      const decoded = jwtDecode(idToken);
       const groups = decoded['cognito:groups'] || [];
       const role = groups.includes('ADMIN') ? 'ADMIN' : 'USER';
       
       const userData = {
         id: decoded.sub,
-        email: email,
+        email: decoded.email || email,
+        name: decoded.name || email.split('@')[0],
         role: role
       };
 
       login(userData, accessToken);
-      toast.success(response.data.message || 'Login successful!');
+      toast.success('Welcome back!');
       
       if (role === 'ADMIN') {
         navigate('/admin/dashboard');
@@ -42,7 +45,14 @@ const Login = () => {
         navigate('/');
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+      if (status === 403) {
+        toast.error('Account not verified. Please contact support or check your email.');
+      } else {
+        toast.error(message || 'Incorrect email or password.');
+
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,10 +82,9 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                  placeholder="admin@euphoriax.com"
+                  placeholder="your@email.com"
                 />
               </div>
-              <p className="text-xs text-primary-300">Hint: Use 'admin' in email for Admin role</p>
             </div>
             
             <div className="space-y-2">
@@ -113,9 +122,12 @@ const Login = () => {
             </button>
           </form>
           
-          <div className="mt-6 text-center">
+          <div className="mt-6 space-y-3 text-center">
             <p className="text-sm text-gray-300">
-              Don't have an account? <a href="#" className="font-medium text-primary-400 hover:text-primary-300">Sign up</a>
+              Don't have an account? <a href="/register" className="font-medium text-primary-400 hover:text-primary-300">Sign up</a>
+            </p>
+            <p className="text-sm text-gray-400">
+              Need to verify your email? <a href="/verify-email" className="font-medium text-primary-400 hover:text-primary-300">Verify here</a>
             </p>
           </div>
         </div>

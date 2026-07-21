@@ -34,6 +34,10 @@ export const authService = {
   login: (data) => api.post(`${authURL}/login`, data),
   register: (data) => api.post(`${authURL}/register`, data),
   me: () => api.get(`${authURL}/me`),
+  verifyEmail: (email, code) => api.post(`${authURL}/verify-email`, { email, code }),
+  resendVerification: (email) => api.post(`${authURL}/resend-verification`, { email }),
+  forgotPassword: (email) => api.post(`${authURL}/forgot-password`, { email }),
+  resetPassword: (data) => api.post(`${authURL}/reset-password`, data),
 };
 
 export const productService = {
