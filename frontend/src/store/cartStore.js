@@ -115,7 +115,10 @@ export const useCartStore = create(
       },
 
       getCartTotal: () => {
-        return get().items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        return get().items.reduce((total, item) => {
+          const price = item.price || item.product?.price || 0;
+          return total + (price * item.quantity);
+        }, 0);
       },
       
       getCartCount: () => {

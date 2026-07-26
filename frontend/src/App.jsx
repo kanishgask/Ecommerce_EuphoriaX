@@ -15,9 +15,14 @@ import VerifyEmail from './pages/VerifyEmail';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
+import UserOrders from './pages/UserOrders';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AdminOrders from './pages/admin/Orders';
+import AdminInventory from './pages/admin/Inventory';
+import AdminPayments from './pages/admin/Payments';
+import AdminUsers from './pages/admin/Users';
+import AdminNotifications from './pages/admin/Notifications';
 
 const Unauthorized = () => <div className="min-h-screen flex items-center justify-center text-red-500 font-bold text-2xl">Unauthorized Access</div>;
 
@@ -35,6 +40,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
+const RootRoute = () => {
+  return <Navigate to="/login" replace />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -48,10 +57,12 @@ function App() {
 
         {/* User Routes */}
         <Route path="/" element={<UserLayout />}>
-          <Route index element={<Home />} />
+          <Route index element={<RootRoute />} />
+          <Route path="home" element={<Home />} />
           <Route path="products" element={<Products />} />
           <Route path="products/:slug" element={<ProductDetail />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="orders" element={<UserOrders />} />
         </Route>
 
         {/* Admin Routes */}
@@ -65,9 +76,12 @@ function App() {
         >
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
+          <Route path="inventory" element={<AdminInventory />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="payments" element={<AdminPayments />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="notifications" element={<AdminNotifications />} />
           <Route index element={<Navigate to="dashboard" replace />} />
-          {/* other admin routes will go here */}
         </Route>
       </Routes>
     </BrowserRouter>
