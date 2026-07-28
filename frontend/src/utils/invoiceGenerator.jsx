@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   }
 });
 
-const InvoiceDocument = ({ order }) => {
+export const InvoiceDocument = ({ order }) => {
   const items = Array.isArray(order.items) && order.items.length > 0 ? order.items : [
     { name: 'Premium E-Commerce Merchandise / Order Package', quantity: typeof order.items === 'number' ? order.items : 1, price: order.total || '$99.00' }
   ];

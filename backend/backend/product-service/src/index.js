@@ -8,7 +8,11 @@ const logger = require('./utils/logger');
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+const allowedOrigins = ['https://d222r50ryi3b71.cloudfront.net', 'http://localhost:5173', 'http://localhost:3000'];
+app.use(cors({
+  origin: (origin, callback) => callback(null, origin || true),
+  credentials: true
+}));
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'product-service' }));

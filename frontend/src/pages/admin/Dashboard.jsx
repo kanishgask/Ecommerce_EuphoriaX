@@ -124,14 +124,28 @@ const Dashboard = () => {
           totalOrders: combinedOrds.length.toLocaleString()
         }));
 
-        const mappedRecent = combinedOrds.slice(0, 5).map((o, idx) => ({
-          id: String(o.orderId || o.id || o._id || `#ORD-${900 + idx}`),
-          customer: String(o.shippingAddress?.firstName ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}` : (o.customer || 'Customer')),
-          date: String(o.createdAt ? new Date(o.createdAt).toLocaleDateString() : (o.date || 'Recent')),
-          amount: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : String(o.total || '$99.00'),
-          status: String(o.status || 'Pending')
-        }));
+        const statusOverrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
+        const mappedRecent = combinedOrds.slice(0, 5).map((o, idx) => {
+          const id = String(o.orderId || o.id || o._id || `#ORD-${900 + idx}`);
+          const cleanId = id.replace('#', '');
+          const status = statusOverrides[id] || statusOverrides[cleanId] || statusOverrides[`#${cleanId}`] || String(o.status || 'Pending');
+          return {
+            id,
+            customer: String(o.shippingAddress?.firstName ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}` : (o.customer || 'Customer')),
+            date: String(o.createdAt ? new Date(o.createdAt).toLocaleDateString() : (o.date || 'Recent')),
+            amount: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : String(o.total || '$99.00'),
+            status
+          };
+        });
         setRecentOrders(mappedRecent);
+      } else {
+        const statusOverrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
+        setRecentOrders(prev => prev.map(o => {
+          const id = String(o.id);
+          const cleanId = id.replace('#', '');
+          const status = statusOverrides[id] || statusOverrides[cleanId] || statusOverrides[`#${cleanId}`] || o.status;
+          return { ...o, status };
+        }));
       }
 
       if (prodRes?.data) {

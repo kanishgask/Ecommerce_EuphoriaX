@@ -79,6 +79,69 @@ const MOCK_ORDERS = [
       }
     ],
     step: 4
+  },
+  {
+    id: '#ORD-7829',
+    date: 'October 24, 2026',
+    status: 'DELIVERED',
+    total: '$129.00',
+    paymentMethod: 'Credit Card (•••• 4242)',
+    trackingNumber: 'UPS-7829104912-US',
+    estimatedDelivery: 'Order Shipped & Delivered Successfully',
+    shippingAddress: '742 Evergreen Terrace, Seattle, WA 98101, USA',
+    items: [
+      {
+        id: 'p1',
+        name: 'Premium E-Commerce Merchandise Package',
+        price: 129.00,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=600&auto=format&fit=crop',
+        category: 'Fashion'
+      }
+    ],
+    step: 4
+  },
+  {
+    id: '#ORD-7828',
+    date: 'October 24, 2026',
+    status: 'PROCESSING',
+    total: '$89.50',
+    paymentMethod: 'Apple Pay / Credit Card',
+    trackingNumber: 'FEDEX-782802831-US',
+    estimatedDelivery: 'Order Processing at Fulfillment Warehouse',
+    shippingAddress: '742 Evergreen Terrace, Seattle, WA 98101, USA',
+    items: [
+      {
+        id: 'p2',
+        name: 'Urban Heavyweight Denim Jacket',
+        price: 89.50,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=600&auto=format&fit=crop',
+        category: 'Fashion'
+      }
+    ],
+    step: 2
+  },
+  {
+    id: '#ORD-7827',
+    date: 'October 23, 2026',
+    status: 'SHIPPED',
+    total: '$450.00',
+    paymentMethod: 'Credit Card (•••• 4242)',
+    trackingNumber: 'UPS-7827019283-US',
+    estimatedDelivery: 'Order Shipped - In Transit to Destination',
+    shippingAddress: '742 Evergreen Terrace, Seattle, WA 98101, USA',
+    items: [
+      {
+        id: 'p3',
+        name: 'Sony WH-1000XM5 Wireless Headphones & Accessories',
+        price: 450.00,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop',
+        category: 'Electronics'
+      }
+    ],
+    step: 3
   }
 ];
 
@@ -103,41 +166,76 @@ const UserOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    const handleStorageChange = () => fetchOrders();
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleStorageChange);
+    };
   }, []);
+
+  const normalizeUserOrder = (o, idx) => {
+    const statusOverrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
+    const fallback = MOCK_ORDERS[idx % MOCK_ORDERS.length] || MOCK_ORDERS[0];
+    const id = String(o.orderId || o.id || o._id || fallback.id || `EX-${800000 + idx}`);
+    const cleanId = id.replace('#', '');
+    
+    // Check status overrides from Admin portal
+    const rawStatus = statusOverrides[id] || statusOverrides[cleanId] || statusOverrides[`#${cleanId}`] || o.status || fallback.status || 'PROCESSING';
+    const status = String(rawStatus).toUpperCase();
+    
+    const step = status === 'DELIVERED' ? 4 : status === 'SHIPPED' ? 3 : status === 'PROCESSING' ? 2 : 1;
+    
+    let estimatedDelivery = o.estimatedDelivery || fallback.estimatedDelivery || 'In Transit';
+    if (status === 'DELIVERED') {
+      estimatedDelivery = 'Order Shipped & Delivered Successfully';
+    } else if (status === 'SHIPPED') {
+      estimatedDelivery = 'Order Shipped - In Transit to Destination';
+    } else if (status === 'PROCESSING') {
+      estimatedDelivery = 'Order Processing at Fulfillment Warehouse';
+    } else if (status === 'CANCELLED') {
+      estimatedDelivery = 'Order Cancelled';
+    }
+
+    return {
+      id,
+      date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : (o.date || fallback.date),
+      status,
+      total: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : (o.total || fallback.total),
+      paymentMethod: o.paymentMethod || fallback.paymentMethod || 'Credit Card',
+      trackingNumber: o.trackingNumber || fallback.trackingNumber || `UPS-${Math.floor(1000000000 + Math.random() * 9000000000)}-US`,
+      estimatedDelivery,
+      shippingAddress: o.shippingAddress?.line1 ? `${o.shippingAddress.line1}, ${o.shippingAddress.city}, ${o.shippingAddress.state}` : (typeof o.shippingAddress === 'string' ? o.shippingAddress : fallback.shippingAddress || '742 Evergreen Terrace, WA'),
+      items: Array.isArray(o.items) ? o.items : (fallback.items || []),
+      step
+    };
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
     let localOrders = [];
     try {
-      localOrders = JSON.parse(localStorage.getItem('euphoriax_orders') || '[]');
+      const parsed = JSON.parse(localStorage.getItem('euphoriax_orders') || '[]');
+      if (Array.isArray(parsed)) {
+        localOrders = parsed.map((o, idx) => normalizeUserOrder(o, idx));
+      }
     } catch (e) {}
+
+    const mappedMock = MOCK_ORDERS.map((o, idx) => normalizeUserOrder(o, idx + 100));
 
     try {
       const res = await orderService.getMyOrders();
       const fetched = res.data?.data?.items || res.data?.data || res.data || [];
       if (Array.isArray(fetched) && fetched.length > 0) {
-        const mapped = fetched.map((o, idx) => {
-          const fallback = MOCK_ORDERS[idx % MOCK_ORDERS.length];
-          return {
-            id: o.orderId || o.id || o._id || `EX-${800000 + idx}`,
-            date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : (o.date || fallback.date),
-            status: (o.status || fallback.status).toUpperCase(),
-            total: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : (o.total || fallback.total),
-            paymentMethod: o.paymentMethod || fallback.paymentMethod,
-            trackingNumber: o.trackingNumber || fallback.trackingNumber,
-            estimatedDelivery: o.estimatedDelivery || fallback.estimatedDelivery,
-            shippingAddress: o.shippingAddress?.line1 ? `${o.shippingAddress.line1}, ${o.shippingAddress.city}, ${o.shippingAddress.state}` : (typeof o.shippingAddress === 'string' ? o.shippingAddress : fallback.shippingAddress),
-            items: o.items || fallback.items,
-            step: o.status === 'DELIVERED' ? 4 : o.status === 'SHIPPED' ? 3 : o.status === 'PROCESSING' ? 2 : 1
-          };
-        });
+        const mapped = fetched.map((o, idx) => normalizeUserOrder(o, idx));
         setOrders([...localOrders, ...mapped]);
       } else {
-        setOrders([...localOrders, ...MOCK_ORDERS]);
+        setOrders([...localOrders, ...mappedMock]);
       }
     } catch (err) {
       console.warn("My orders API fallback to local mock orders:", err);
-      setOrders([...localOrders, ...MOCK_ORDERS]);
+      setOrders([...localOrders, ...mappedMock]);
     } finally {
       setLoading(false);
     }

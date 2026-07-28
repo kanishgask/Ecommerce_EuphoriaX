@@ -46,12 +46,16 @@ const Payments = () => {
       const combined = [...localOrders, ...((Array.isArray(ords) ? ords : []))];
       
       if (combined.length > 0) {
+        const statusOverrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
         const mapped = combined.map((o, idx) => {
           const amt = typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : (o.total || '$99.00');
-          const st = (o.status || '').toUpperCase() === 'CANCELLED' ? 'Refunded' : (o.status || '').toUpperCase() === 'PENDING' ? 'Pending' : 'Completed';
+          const ordId = String(o.orderId || o.id || o._id || `#ORD-${8000 + idx}`);
+          const cleanId = ordId.replace('#', '');
+          const rawStatus = statusOverrides[ordId] || statusOverrides[cleanId] || statusOverrides[`#${cleanId}`] || o.status || '';
+          const st = rawStatus.toUpperCase() === 'CANCELLED' ? 'Refunded' : rawStatus.toUpperCase() === 'PENDING' ? 'Pending' : 'Completed';
           return {
             id: String(o.id ? `TXN-${o.id}` : `TXN-${9000 + idx}`),
-            orderId: String(o.orderId || o.id || o._id || `#ORD-${8000 + idx}`),
+            orderId: ordId,
             customer: String(o.shippingAddress?.firstName ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}` : (o.customer || 'Customer')),
             amount: String(amt),
             method: String(o.paymentMethod || 'Credit Card (•••• 4242)'),

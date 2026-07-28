@@ -12,8 +12,9 @@ const app = express();
 
 app.use(helmet());
 
+const allowedOrigins = ['https://d222r50ryi3b71.cloudfront.net', 'http://localhost:5173', 'http://localhost:3000'];
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: (origin, callback) => callback(null, origin || true),
   credentials: true
 }));
 

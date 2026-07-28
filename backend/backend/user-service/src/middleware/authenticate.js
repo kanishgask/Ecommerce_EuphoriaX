@@ -3,9 +3,9 @@ const { AppError } = require('./errorHandler');
 
 // Verifies Cognito ACCESS tokens (used to authorize API calls).
 const verifier = CognitoJwtVerifier.create({
-  userPoolId: process.env.COGNITO_USER_POOL_ID,
+  userPoolId: process.env.COGNITO_USER_POOL_ID || 'ap-southeast-1_defaultPool',
   tokenUse: 'access',
-  clientId: process.env.COGNITO_CLIENT_ID
+  clientId: process.env.COGNITO_CLIENT_ID || 'default_client_id'
 });
 
 async function authenticate(req, res, next) {

@@ -1,0 +1,137 @@
+name: EuphoriaX Full-Stack CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # =========================================================
+  # 1. CONTINUOUS INTEGRATION: FRONTEND (Vite + Vitest)
+  # =========================================================
+  frontend-ci:
+    name: Frontend CI (Build & Test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci || npm install
+
+      - name: Run Vitest Unit Tests
+        working-directory: ./frontend
+        run: npm test
+
+      - name: Build Production SPA Bundle
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: https://api.euphoriax.com
+
+      - name: Upload Build Artifacts (for CD)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
+  # =========================================================
+  # 2. CONTINUOUS INTEGRATION: BACKEND MICROSERVICES (Jest)
+  # =========================================================
+  backend-ci:
+    name: Backend CI (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - auth-service
+          - user-service
+          - product-service
+          - cart-service
+          - order-service
+          - inventory-service
+          - notification-service
+          - payment-service
+      fail-fast: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install Microservice Dependencies
+        working-directory: ./backend/backend/${{ matrix.service }}
+        run: npm ci || npm install
+
+      - name: Run Jest Unit Test Suite
+        working-directory: ./backend/backend/${{ matrix.service }}
+        run: npm test
+        env:
+          NODE_ENV: test
+          PORT: 4000
+          AWS_REGION: ap-southeast-1
+
+  # =========================================================
+  # 3. CONTINUOUS DEPLOYMENT: FRONTEND -> AWS S3 & CLOUDFRONT
+  # =========================================================
+  deploy-frontend-cd:
+    name: Continuous Deployment (S3 & CloudFront)
+    needs: [frontend-ci, backend-ci]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Frontend Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./dist
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
+
+      - name: Sync Static Bundle to AWS S3 Bucket
+        run: |
+          echo "Syncing files to S3 bucket..."
+          # aws s3 sync ./dist s3://${{ secrets.AWS_S3_BUCKET_NAME }} --delete --cache-control "max-age=31536000,public"
+          echo "S3 Sync Command Prepared. Set AWS_S3_BUCKET_NAME secret in GitHub."
+
+      - name: Invalidate CloudFront CDN Cache
+        run: |
+          echo "Invalidating CloudFront CDN cache for https://d222r50ryi3b71.cloudfront.net..."
+          # aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} --paths "/*"
+          echo "CloudFront Invalidation Command Prepared. Set CLOUDFRONT_DIST_ID secret in GitHub."
+
+  # =========================================================
+  # 4. CONTINUOUS DEPLOYMENT: BACKEND -> AWS LAMBDA / ECS
+  # =========================================================
+  deploy-backend-cd:
+    name: Continuous Deployment (Backend Microservices)
+    needs: [frontend-ci, backend-ci]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Microservices
+        run: |
+          echo "Backend CI tests passed! Ready for serverless or container deployment to AWS Lambda / ECS."
+          # Example: npx serverless deploy --stage production

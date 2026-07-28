@@ -5,6 +5,9 @@ import { orderService } from '../../services/api';
 import { downloadOrderInvoice } from '../../utils/invoiceGenerator.jsx';
 
 const initialOrders = [
+  { id: 'EX-892410', customer: 'Emma Watson', email: 'emma@example.com', date: '2026-07-26', items: 1, total: '$314.99', status: 'Shipped', version: 1 },
+  { id: 'EX-771092', customer: 'James Bond', email: 'james@example.com', date: '2026-07-18', items: 1, total: '$199.50', status: 'Delivered', version: 1 },
+  { id: 'EX-601928', customer: 'Tony Stark', email: 'tony@example.com', date: '2026-06-05', items: 2, total: '$234.99', status: 'Delivered', version: 1 },
   { id: '#ORD-7829', customer: 'Emma Watson', email: 'emma@example.com', date: '2023-10-24', items: 3, total: '$129.00', status: 'Delivered', version: 1 },
   { id: '#ORD-7828', customer: 'James Bond', email: 'james@example.com', date: '2023-10-24', items: 1, total: '$89.50', status: 'Processing', version: 1 },
   { id: '#ORD-7827', customer: 'Bruce Wayne', email: 'bruce@example.com', date: '2023-10-23', items: 5, total: '$450.00', status: 'Shipped', version: 1 },
@@ -45,17 +48,23 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
-  const normalizeOrder = (o, idx) => ({
-    id: String(o.orderId || o.id || o._id || `#ORD-${8000 + idx}`),
-    customer: String(o.shippingAddress?.firstName ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}` : (o.customer || 'Customer')),
-    email: String(o.userId ? `user_${String(o.userId).slice(-4)}@euphoria.com` : (o.email || 'guest@euphoria.com')),
-    date: String(o.createdAt ? new Date(o.createdAt).toLocaleDateString() : (o.date || 'Today')),
-    items: Array.isArray(o.items) ? o.items.reduce((sum, item) => sum + (item.quantity || 1), 0) : (typeof o.items === 'object' ? 1 : Number(o.items || 1)),
-    total: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : String(o.total || '$99.00'),
-    status: String(o.status || 'Pending'),
-    version: Number(o.version || 1),
-    rawOrder: o
-  });
+  const normalizeOrder = (o, idx) => {
+    const statusOverrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
+    const id = String(o.orderId || o.id || o._id || `#ORD-${8000 + idx}`);
+    const cleanId = id.replace('#', '');
+    const status = statusOverrides[id] || statusOverrides[cleanId] || statusOverrides[`#${cleanId}`] || String(o.status || 'Pending');
+    return {
+      id,
+      customer: String(o.shippingAddress?.firstName ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}` : (o.customer || 'Customer')),
+      email: String(o.userId ? `user_${String(o.userId).slice(-4)}@euphoria.com` : (o.email || 'guest@euphoria.com')),
+      date: String(o.createdAt ? new Date(o.createdAt).toLocaleDateString() : (o.date || 'Today')),
+      items: Array.isArray(o.items) ? o.items.reduce((sum, item) => sum + (item.quantity || 1), 0) : (typeof o.items === 'object' ? 1 : Number(o.items || 1)),
+      total: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : String(o.total || '$99.00'),
+      status,
+      version: Number(o.version || 1),
+      rawOrder: o
+    };
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -67,6 +76,8 @@ const Orders = () => {
       }
     } catch (e) {}
 
+    const mappedInitial = initialOrders.map((o, idx) => normalizeOrder(o, idx + 100));
+
     try {
       const res = await orderService.getAllOrders();
       const fetched = res.data?.data?.items || res.data?.data || res.data || [];
@@ -74,11 +85,11 @@ const Orders = () => {
         const mapped = fetched.map((o, idx) => normalizeOrder(o, idx));
         setOrders([...localOrders, ...mapped]);
       } else {
-        setOrders([...localOrders, ...initialOrders]);
+        setOrders([...localOrders, ...mappedInitial]);
       }
     } catch (err) {
       console.warn("Backend orders fetch fallback:", err);
-      setOrders([...localOrders, ...initialOrders]);
+      setOrders([...localOrders, ...mappedInitial]);
     } finally {
       setLoading(false);
     }
@@ -89,6 +100,32 @@ const Orders = () => {
       await orderService.updateStatus(orderId, { status: newStatus.toUpperCase(), version: currentVersion });
     } catch (err) {
       console.warn("Backend order status update fallback:", err);
+    }
+
+    // Persist status override in localStorage so User Portal and all Admin pages see it immediately
+    try {
+      const overrides = JSON.parse(localStorage.getItem('euphoriax_order_statuses') || '{}');
+      overrides[String(orderId)] = newStatus;
+      overrides[String(orderId).replace('#', '')] = newStatus;
+      overrides[`#${String(orderId).replace('#', '')}`] = newStatus;
+      localStorage.setItem('euphoriax_order_statuses', JSON.stringify(overrides));
+    } catch (e) {
+      console.error("Failed to save order status override:", e);
+    }
+
+    // Update euphoriax_orders in localStorage if it was a customer checkout order
+    try {
+      const local = JSON.parse(localStorage.getItem('euphoriax_orders') || '[]');
+      const updatedLocal = local.map(o => {
+        const id = String(o.orderId || o.id || o._id || '');
+        if (id === orderId || `#${id}` === orderId || orderId === `#${id}` || id === String(orderId).replace('#', '')) {
+          return { ...o, status: newStatus, version: (o.version || 1) + 1 };
+        }
+        return o;
+      });
+      localStorage.setItem('euphoriax_orders', JSON.stringify(updatedLocal));
+    } catch (e) {
+      console.error("Failed to update localStorage orders:", e);
     }
 
     setOrders(orders.map(o => {
