@@ -34,7 +34,7 @@ export default function UserLayout() {
         <div className="container mx-auto px-6 flex justify-between items-center">
           {/* Logo */}
           <Link to="/home" className="text-2xl font-black tracking-tighter">
-            <span className="bg-gradient-to-r from-primary-400 to-amber-400 bg-clip-text text-transparent">Euphoria</span>
+            <span className="bg-gradient-to-r from-primary-500 to-primary-300 bg-clip-text text-transparent">Euphoria</span>
             <span className="text-white">X</span>
           </Link>
 
@@ -48,7 +48,7 @@ export default function UserLayout() {
             ].map((item) => (
               <Link key={item.name} to={item.path} className="text-sm font-medium text-gray-300 hover:text-white relative group">
                 {item.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-500 to-amber-500 transition-all duration-300 group-hover:w-full"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-300 transition-all duration-300 group-hover:w-full"></span>
               </Link>
             ))}
           </nav>
