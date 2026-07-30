@@ -12,7 +12,7 @@ on:
 
 jobs:
   #########################################################
-  # FRONTEND CI /CD
+  # FRONTEND CI /CD  
   #########################################################
   frontend-ci:
     name: Frontend CI (Build & Test)
