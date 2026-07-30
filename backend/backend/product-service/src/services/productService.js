@@ -48,7 +48,7 @@ async function listProducts({ category, limit, cursor }) {
   if (category) return repo.listByCategory(category, { limit, cursor });
   return repo.listAll({ limit, cursor });
 }
-
+//hi
 async function searchProducts(keyword) {
   if (!keyword || keyword.trim().length === 0) throw new AppError('Search query is required', 422);
   return repo.searchByKeyword(keyword.trim());
