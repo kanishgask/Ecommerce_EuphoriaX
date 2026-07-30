@@ -2,9 +2,13 @@ name: EuphoriaX Full-Stack CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - devops-integration
+
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
 
 jobs:
   # =========================================================
