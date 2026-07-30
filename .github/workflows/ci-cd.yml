@@ -5,14 +5,14 @@ on:
     branches:
       - main
       - devops-integration
-
+      
   pull_request:
     branches:
       - main
 
 jobs:
   #########################################################
-  # FRONTEND CI
+  # FRONTEND CI /CD
   #########################################################
   frontend-ci:
     name: Frontend CI (Build & Test)
