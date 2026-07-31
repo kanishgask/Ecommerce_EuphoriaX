@@ -1,4 +1,4 @@
-const {
+ const {
   CognitoIdentityProviderClient,
   SignUpCommand,
   ConfirmSignUpCommand,
@@ -214,3 +214,4 @@ module.exports = {
   changePassword,
   getUser
 };
+// test
