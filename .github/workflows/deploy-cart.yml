@@ -1,18 +1,13 @@
 name: Deploy - Cart Service
 
 on:
-  workflow_run:
-    workflows: ["CI - Cart Service"]
-    types:
-      - completed
-    branches:
-      - ci-cd
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: cart-service
-      service_path: backend/cart-service
+      service_path: backend/backend/cart-service
+    secrets: inherit

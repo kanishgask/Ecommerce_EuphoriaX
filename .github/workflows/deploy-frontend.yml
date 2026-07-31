@@ -1,49 +1,71 @@
 name: Deploy - Frontend
 
 on:
-  workflow_run:
-    workflows: ["CI - Frontend"]
-    types:
-      - completed
-    branches:
-      - ci-cd
+  workflow_call:
   workflow_dispatch:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-frontend
+      cancel-in-progress: false
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-frontend
+          path: dist
+          
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-southeast-1
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Build and Deploy Frontend
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
+          
+      - name: Upload dist to S3 Bucket with Retries
         working-directory: frontend
         run: |
-          npm ci
-          npm run build
+          n=0
+          max_retries=3
+          until [ "$n" -ge "$max_retries" ]
+          do
+             aws s3 sync dist/ s3://euphoriaxbucket --delete && break
+             n=$((n+1))
+             echo "S3 sync failed. Retrying in 10s ($n/$max_retries)..."
+             sleep 10
+          done
           
-          # Sync to S3
-          aws s3 sync dist/ s3://euphoriaxbucket --delete
+          if [ "$n" -ge "$max_retries" ]; then
+            echo "Failed to sync to S3 after $max_retries attempts."
+            exit 1
+          fi
           
-          # Find Distribution ID from domain name and invalidate
+      - name: Invalidate CloudFront Distribution with Retries
+        run: |
           DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?DomainName=='d3o04910qsjznl.cloudfront.net'].Id" --output text)
           
           if [ -n "$DIST_ID" ] && [ "$DIST_ID" != "None" ]; then
-            aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
+            n=0
+            max_retries=3
+            until [ "$n" -ge "$max_retries" ]
+            do
+               aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*" && break
+               n=$((n+1))
+               echo "CloudFront invalidation failed. Retrying in 10s ($n/$max_retries)..."
+               sleep 10
+            done
+            if [ "$n" -ge "$max_retries" ]; then
+               echo "Failed to invalidate CloudFront after $max_retries attempts."
+               exit 1
+            fi
           else
             echo "Failed to find CloudFront Distribution ID for d3o04910qsjznl.cloudfront.net"
             exit 1
           fi
+
+      - name: Print Deployment Summary
+        run: echo "Frontend Deployment to S3 and CloudFront completed successfully!"

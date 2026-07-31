@@ -1,0 +1,25 @@
+name: CI - Inventory Consumer
+
+on:
+  push:
+    paths:
+      - 'backend/backend/inventory-consumer/**'
+      - '.github/workflows/inventory-consumer.yml'
+      - '.github/workflows/deploy-inventory-consumer.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: inventory-consumer
+      service_path: backend/backend/inventory-consumer
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-inventory-consumer.yml
+    secrets: inherit

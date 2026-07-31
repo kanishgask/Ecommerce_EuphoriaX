@@ -5,24 +5,59 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend.yml'
+      - '.github/workflows/deploy-frontend.yml'
+    branches:
+      - ci-cd
+      - main
   workflow_dispatch:
 
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install Dependencies
         working-directory: frontend
         run: npm ci
 
+      - name: Run Linter
+        working-directory: frontend
+        run: npm run lint --if-present
+
       - name: Run Tests
         working-directory: frontend
-        run: npm test
+        run: npm test -- --coverage
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-frontend
+          path: frontend/coverage/
+          retention-days: 7
+          
+      - name: Build React Application (Vite)
+        working-directory: frontend
+        run: npm run build
+        
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-frontend
+          path: frontend/dist/
+          retention-days: 1
+
+  trigger_cd:
+    needs: build_and_test
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-frontend.yml
+    secrets: inherit

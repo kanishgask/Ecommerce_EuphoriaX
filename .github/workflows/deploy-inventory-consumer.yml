@@ -1,4 +1,4 @@
-name: Deploy - Product Service
+name: Deploy - Inventory Consumer
 
 on:
   workflow_call:
@@ -8,6 +8,6 @@ jobs:
   deploy:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
-      service_name: product-service
-      service_path: backend/backend/product-service
+      service_name: inventory-consumer
+      service_path: backend/backend/inventory-consumer
     secrets: inherit

@@ -1,0 +1,25 @@
+name: CI - Email Consumer
+
+on:
+  push:
+    paths:
+      - 'backend/backend/email-consumer/**'
+      - '.github/workflows/email-consumer.yml'
+      - '.github/workflows/deploy-email-consumer.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: email-consumer
+      service_path: backend/backend/email-consumer
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-email-consumer.yml
+    secrets: inherit

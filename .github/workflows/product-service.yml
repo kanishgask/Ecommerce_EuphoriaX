@@ -3,8 +3,12 @@ name: CI - Product Service
 on:
   push:
     paths:
-      - 'backend/product-service/**'
+      - 'backend/backend/product-service/**'
       - '.github/workflows/product-service.yml'
+      - '.github/workflows/deploy-product.yml'
+    branches:
+      - ci-cd
+      - main
   workflow_dispatch:
 
 jobs:
@@ -12,4 +16,10 @@ jobs:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: product-service
-      service_path: backend/product-service
+      service_path: backend/backend/product-service
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-product.yml
+    secrets: inherit

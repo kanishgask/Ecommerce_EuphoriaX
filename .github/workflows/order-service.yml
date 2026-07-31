@@ -3,8 +3,12 @@ name: CI - Order Service
 on:
   push:
     paths:
-      - 'backend/order-service/**'
+      - 'backend/backend/order-service/**'
       - '.github/workflows/order-service.yml'
+      - '.github/workflows/deploy-order.yml'
+    branches:
+      - ci-cd
+      - main
   workflow_dispatch:
 
 jobs:
@@ -12,4 +16,10 @@ jobs:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: order-service
-      service_path: backend/order-service
+      service_path: backend/backend/order-service
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-order.yml
+    secrets: inherit

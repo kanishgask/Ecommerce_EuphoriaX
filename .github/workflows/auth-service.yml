@@ -5,6 +5,10 @@ on:
     paths:
       - 'backend/backend/auth-service/**'
       - '.github/workflows/auth-service.yml'
+      - '.github/workflows/deploy-auth.yml'
+    branches:
+      - ci-cd
+      - main
   workflow_dispatch:
 
 jobs:
@@ -13,3 +17,9 @@ jobs:
     with:
       service_name: auth-service
       service_path: backend/backend/auth-service
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-auth.yml
+    secrets: inherit
