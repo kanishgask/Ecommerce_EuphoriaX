@@ -27,7 +27,6 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
           
       - name: Upload dist to S3 Bucket with Retries
-        working-directory: frontend
         run: |
           n=0
           max_retries=3
