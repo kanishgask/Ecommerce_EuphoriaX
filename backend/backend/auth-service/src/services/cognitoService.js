@@ -214,3 +214,4 @@ module.exports = {
   changePassword,
   getUser
 };
+// test the ci-cd pipeline
