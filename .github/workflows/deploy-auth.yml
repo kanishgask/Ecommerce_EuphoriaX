@@ -1,8 +1,8 @@
-name: Deploy - Analytics Service
+name: Deploy - Auth Service
 
 on:
   workflow_run:
-    workflows: ["CI - Analytics Service"]
+    workflows: ["CI - Auth Service"]
     types:
       - completed
     branches:
@@ -14,5 +14,5 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
-      service_name: analytics-service
-      service_path: backend/analytics-service
+      service_name: auth-service
+      service_path: backend/backend/auth-service

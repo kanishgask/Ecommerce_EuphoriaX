@@ -33,13 +33,5 @@ jobs:
       - name: Deploy Service to Lambda
         working-directory: ${{ inputs.service_path }}
         run: |
-          # Map service names if they diverge, but generally they match euphoriax-<service_name>
-          # E.g., customer-service -> user-service if needed, but we'll try direct mapping first
           FUNCTION_NAME="euphoriax-${{ inputs.service_name }}"
-          
-          # Quick override for known mismatches from Phase 4.1 instructions vs existing AWS resources
-          if [ "${{ inputs.service_name }}" == "customer-service" ]; then
-            FUNCTION_NAME="euphoriax-user-service"
-          fi
-          
           aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://function.zip

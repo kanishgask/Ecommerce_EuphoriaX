@@ -1,0 +1,15 @@
+name: CI - Notification Service
+
+on:
+  push:
+    paths:
+      - 'backend/backend/notification-service/**'
+      - '.github/workflows/notification-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: notification-service
+      service_path: backend/backend/notification-service
