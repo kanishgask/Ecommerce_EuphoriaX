@@ -1,0 +1,15 @@
+name: CI - Inventory Service
+
+on:
+  push:
+    paths:
+      - 'backend/inventory-service/**'
+      - '.github/workflows/inventory-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: inventory-service
+      service_path: backend/inventory-service

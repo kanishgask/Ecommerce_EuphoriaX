@@ -1,0 +1,33 @@
+name: Reusable Backend CI
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: "The name of the service"
+      service_path:
+        required: true
+        type: string
+        description: "The path to the service directory"
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        working-directory: ${{ inputs.service_path }}
+        run: npm ci
+
+      - name: Run Unit Tests
+        working-directory: ${{ inputs.service_path }}
+        run: npm test

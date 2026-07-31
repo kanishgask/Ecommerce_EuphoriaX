@@ -1,0 +1,15 @@
+name: CI - Payment Service
+
+on:
+  push:
+    paths:
+      - 'backend/payment-service/**'
+      - '.github/workflows/payment-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: payment-service
+      service_path: backend/payment-service

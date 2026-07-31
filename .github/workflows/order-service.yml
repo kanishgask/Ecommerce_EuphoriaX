@@ -1,0 +1,15 @@
+name: CI - Order Service
+
+on:
+  push:
+    paths:
+      - 'backend/order-service/**'
+      - '.github/workflows/order-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: order-service
+      service_path: backend/order-service

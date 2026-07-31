@@ -1,0 +1,15 @@
+name: CI - Cart Service
+
+on:
+  push:
+    paths:
+      - 'backend/cart-service/**'
+      - '.github/workflows/cart-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: cart-service
+      service_path: backend/cart-service

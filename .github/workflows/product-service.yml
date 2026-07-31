@@ -1,0 +1,15 @@
+name: CI - Product Service
+
+on:
+  push:
+    paths:
+      - 'backend/product-service/**'
+      - '.github/workflows/product-service.yml'
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: product-service
+      service_path: backend/product-service
