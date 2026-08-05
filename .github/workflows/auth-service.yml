@@ -17,6 +17,7 @@ jobs:
     with:
       service_name: auth-service
       service_path: backend/auth-service
+    secrets: inherit
 
   trigger_cd:
     needs: ci

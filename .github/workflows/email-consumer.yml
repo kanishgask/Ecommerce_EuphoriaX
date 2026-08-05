@@ -17,6 +17,7 @@ jobs:
     with:
       service_name: email-consumer
       service_path: backend/email-consumer
+    secrets: inherit
 
   trigger_cd:
     needs: ci

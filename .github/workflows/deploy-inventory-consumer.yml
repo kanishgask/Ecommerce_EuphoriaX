@@ -11,3 +11,4 @@ jobs:
       service_name: inventory-consumer
       service_path: backend/inventory-consumer
     secrets: inherit
+    secrets: inherit

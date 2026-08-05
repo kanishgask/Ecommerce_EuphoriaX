@@ -17,6 +17,7 @@ jobs:
     with:
       service_name: order-service
       service_path: backend/order-service
+    secrets: inherit
 
   trigger_cd:
     needs: ci

@@ -17,6 +17,7 @@ jobs:
     with:
       service_name: product-service
       service_path: backend/product-service
+    secrets: inherit
 
   trigger_cd:
     needs: ci
