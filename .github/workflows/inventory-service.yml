@@ -1,11 +1,11 @@
-name: CI - Email Consumer
+name: CI - Inventory Service
 
 on:
   push:
     paths:
-      - 'backend/email-consumer/**'
-      - '.github/workflows/email-consumer.yml'
-      - '.github/workflows/deploy-email-consumer.yml'
+      - 'backend/inventory-service/**'
+      - '.github/workflows/inventory-service.yml'
+      - '.github/workflows/deploy-inventory.yml'
     branches:
       - ci-cd
       - main
@@ -15,12 +15,12 @@ jobs:
   ci:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
-      service_name: email-consumer
-      service_path: backend/email-consumer
+      service_name: inventory-service
+      service_path: backend/inventory-service
     secrets: inherit
 
   trigger_cd:
     needs: ci
     if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/deploy-email-consumer.yml
+    uses: ./.github/workflows/deploy-inventory.yml
     secrets: inherit
