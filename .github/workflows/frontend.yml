@@ -63,6 +63,7 @@ jobs:
           projectBaseDir: frontend
           args: >
             -Dsonar.projectKey=euphoriax-frontend
+            -Dsonar.organization=kanishgask
             -Dsonar.sources=src
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.exclusions=node_modules/**,coverage/**,**/*.test.js,**/*.test.jsx

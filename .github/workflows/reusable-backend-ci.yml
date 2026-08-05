@@ -64,6 +64,7 @@ jobs:
           projectBaseDir: ${{ inputs.service_path }}
           args: >
             -Dsonar.projectKey=euphoriax-${{ inputs.service_name }}
+            -Dsonar.organization=kanishgask
             -Dsonar.sources=.
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.exclusions=node_modules/**,coverage/**,**/*.test.js
