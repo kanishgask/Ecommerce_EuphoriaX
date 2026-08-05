@@ -19,8 +19,6 @@ jobs:
           - order-service
           - payment-service
           - notification-service
-          - email-consumer
-          - inventory-consumer
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: ${{ matrix.service }}
@@ -42,8 +40,6 @@ jobs:
           - order-service
           - payment-service
           - notification-service
-          - email-consumer
-          - inventory-consumer
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: ${{ matrix.service }}
