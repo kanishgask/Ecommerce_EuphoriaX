@@ -96,7 +96,22 @@ This model completely eliminates manual database setup. Our Terraform infrastruc
 
 ---
 
-## 🛠️ 4. Core Technology Stack
+## ☁️ 4. AWS Services Utilized
+
+This project leverages a wide array of managed AWS services to achieve a robust, event-driven architecture:
+
+* **AWS Lambda**: Provides the serverless compute backbone for all 8 microservices, scaling instantly from zero to thousands of concurrent requests.
+* **Amazon API Gateway**: Acts as the single, secure entry point for the frontend, routing HTTP requests to the appropriate backend Lambda functions.
+* **Amazon DynamoDB**: A fully managed NoSQL database delivering single-digit millisecond performance for the 7 microservice tables.
+* **Amazon Cognito**: Secures the platform by handling user registration, passwordless authentication, and JWT token vending.
+* **Amazon SNS (Simple Notification Service)**: Used for high-throughput, push-based, many-to-many messaging and triggering CloudWatch alarms.
+* **Amazon SQS (Simple Queue Service)**: Used to decouple heavy background processes (like order processing and email notifications) via reliable message queuing.
+* **Amazon CloudWatch**: Centralized observability service for storing logs, building custom dashboards, and triggering alarms.
+* **AWS X-Ray**: Provides end-to-end distributed tracing across microservices to identify performance bottlenecks as requests hop between API Gateway, Lambda, and DynamoDB.
+
+---
+
+## 🛠️ 5. Core Technology Stack
 
 | Category | Technology | Purpose |
 | :--- | :--- | :--- |
@@ -110,7 +125,7 @@ This model completely eliminates manual database setup. Our Terraform infrastruc
 
 ---
 
-## 🛡️ 5. DevSecOps & Automated CI/CD
+## 🛡️ 6. DevSecOps & Automated CI/CD
 
 The project includes an incredibly robust, 100% automated pipeline built on GitHub Actions:
 
@@ -120,14 +135,14 @@ The project includes an incredibly robust, 100% automated pipeline built on GitH
 
 ---
 
-## 📈 6. Observability & Monitoring
+## 📈 7. Observability & Monitoring
 
 * **Amazon CloudWatch Dashboards**: Terraform automatically provisions a central dashboard to monitor API latency, Lambda executions, and error rates across all 8 services.
 * **AWS X-Ray**: Distributed tracing is injected into the services. A single checkout request can be visually traced as it hops from the API Gateway, to the Order Service, to the Payment Service, and into DynamoDB.
 
 ---
 
-## 💻 7. How to Run the Project (Detailed Setup)
+## 💻 8. How to Run the Project (Detailed Setup)
 
 Since this is a fully automated Cloud-Native architecture, running the project involves authenticating with AWS and letting our code build the environment for you.
 
@@ -180,7 +195,7 @@ Visit `http://localhost:5173` in your browser to experience the fully functional
 
 ---
 
-## 📸 8. Interface Showcase
+## 📸 9. Interface Showcase
 
 *Replace these placeholders with actual screenshots of your fully working deployment.*
 
@@ -190,7 +205,7 @@ Visit `http://localhost:5173` in your browser to experience the fully functional
 
 ---
 
-## 👨‍💻 9. Author & License
+## 👨‍💻 10. Author & License
 
 **Kanishga S**
 * **GitHub:** [@kanishgask](https://github.com/kanishgask)
