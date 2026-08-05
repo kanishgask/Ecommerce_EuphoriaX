@@ -31,6 +31,12 @@ jobs:
         working-directory: ${{ inputs.service_path }}
         run: npm ci
 
+      - name: Run Snyk to check for vulnerabilities
+        working-directory: ${{ inputs.service_path }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: npx snyk test
+
       - name: Run Linter
         working-directory: ${{ inputs.service_path }}
         run: npm run lint --if-present

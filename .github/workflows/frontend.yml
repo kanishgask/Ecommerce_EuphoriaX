@@ -30,6 +30,12 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Run Snyk to check for vulnerabilities
+        working-directory: frontend
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: npx snyk test
+
       - name: Run Linter
         working-directory: frontend
         run: npm run lint --if-present
