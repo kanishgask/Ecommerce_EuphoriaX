@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: inventory-service
-      service_path: backend/backend/inventory-service
+      service_path: backend/inventory-service
     secrets: inherit

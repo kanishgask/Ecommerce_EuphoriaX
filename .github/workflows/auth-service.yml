@@ -3,7 +3,7 @@ name: CI - Auth Service
 on:
   push:
     paths:
-      - 'backend/backend/auth-service/**'
+      - 'backend/auth-service/**'
       - '.github/workflows/auth-service.yml'
       - '.github/workflows/deploy-auth.yml'
     branches:
@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: auth-service
-      service_path: backend/backend/auth-service
+      service_path: backend/auth-service
 
   trigger_cd:
     needs: ci

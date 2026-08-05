@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: email-consumer
-      service_path: backend/backend/email-consumer
+      service_path: backend/email-consumer
     secrets: inherit

@@ -3,7 +3,7 @@ name: CI - Product Service
 on:
   push:
     paths:
-      - 'backend/backend/product-service/**'
+      - 'backend/product-service/**'
       - '.github/workflows/product-service.yml'
       - '.github/workflows/deploy-product.yml'
     branches:
@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: product-service
-      service_path: backend/backend/product-service
+      service_path: backend/product-service
 
   trigger_cd:
     needs: ci

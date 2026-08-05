@@ -1,20 +1,22 @@
-resource "aws_dynamodb_table" "cart" {
-  name         = "EuphoriaX-Cart"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id" # Placeholder, we will fix this if terraform plan shows drift
+# ==========================================
+# DynamoDB Tables for Microservices
+# ==========================================
 
-  attribute {
-    name = "id"
-    type = "S"
-  }
-  
-  lifecycle {
-    ignore_changes = [read_capacity, write_capacity]
-  }
+locals {
+  tables = [
+    "EuphoriaX-Users",
+    "EuphoriaX-Products",
+    "EuphoriaX-Cart",
+    "EuphoriaX-Orders",
+    "EuphoriaX-Payments",
+    "EuphoriaX-Inventory",
+    "EuphoriaX-Notifications"
+  ]
 }
 
-resource "aws_dynamodb_table" "orders" {
-  name         = "EuphoriaX-Orders"
+resource "aws_dynamodb_table" "tables" {
+  for_each     = toset(local.tables)
+  name         = each.key
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -22,38 +24,9 @@ resource "aws_dynamodb_table" "orders" {
     name = "id"
     type = "S"
   }
-  
-  lifecycle {
-    ignore_changes = [read_capacity, write_capacity]
-  }
-}
 
-resource "aws_dynamodb_table" "products" {
-  name         = "EuphoriaX-Products"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
-
-  attribute {
-    name = "id"
-    type = "S"
-  }
-  
-  lifecycle {
-    ignore_changes = [read_capacity, write_capacity]
-  }
-}
-
-resource "aws_dynamodb_table" "users" {
-  name         = "EuphoriaX-Users"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
-
-  attribute {
-    name = "id"
-    type = "S"
-  }
-  
-  lifecycle {
-    ignore_changes = [read_capacity, write_capacity]
+  tags = {
+    Environment = "Production"
+    ManagedBy   = "Terraform"
   }
 }
