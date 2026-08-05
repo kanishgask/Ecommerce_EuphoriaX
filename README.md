@@ -96,8 +96,7 @@ This model completely eliminates manual database setup. Our Terraform infrastruc
 
 ---
 
-<details>
-<summary><b>🛠️ Click to expand: Core Technology Stack</b></summary>
+## 🛠️ 4. Core Technology Stack
 
 | Category | Technology | Purpose |
 | :--- | :--- | :--- |
@@ -108,52 +107,80 @@ This model completely eliminates manual database setup. Our Terraform infrastruc
 | **Infrastructure as Code**| HashiCorp Terraform | Automating all database and compute creation |
 | **CI/CD** | GitHub Actions | 100% automated deployment pipelines |
 | **Security & Quality** | Snyk, SonarQube | Automated DevSecOps vulnerability blocking |
-</details>
 
-<details>
-<summary><b>🛡️ Click to expand: DevSecOps & Automated CI/CD</b></summary>
+---
+
+## 🛡️ 5. DevSecOps & Automated CI/CD
 
 The project includes an incredibly robust, 100% automated pipeline built on GitHub Actions:
 
 1. **Infrastructure CI/CD**: Pushing to `main` triggers Terraform to instantly create any missing DynamoDB tables, API Gateways, or Lambda functions.
 2. **Security Gates**: Every backend microservice triggers a strict `Snyk` vulnerability scan and `SonarQube` code quality analysis.
 3. **Resilient CD Pipeline**: The Continuous Deployment pipelines dynamically check if the AWS environment exists (vital for ephemeral AWS Learner Labs). If the environment was reset, the pipeline gracefully skips; if the environment exists, it instantly injects the new code into all 8 microservices simultaneously.
-</details>
-
-<details>
-<summary><b>📈 Click to expand: Observability & Monitoring</b></summary>
-
-* **Amazon CloudWatch Dashboards**: Terraform automatically provisions a central dashboard to monitor API latency, Lambda executions, and error rates across all 8 services.
-* **AWS X-Ray**: Distributed tracing is injected into the services. A single checkout request can be visually traced as it hops from the API Gateway, to the Order Service, to the Payment Service, and into DynamoDB.
-</details>
 
 ---
 
-## 💻 4. Running the Fully Working Model
+## 📈 6. Observability & Monitoring
 
-### Step 1: Automatically Provision All Tables & Compute
-*You do not need to create anything manually in AWS.*
+* **Amazon CloudWatch Dashboards**: Terraform automatically provisions a central dashboard to monitor API latency, Lambda executions, and error rates across all 8 services.
+* **AWS X-Ray**: Distributed tracing is injected into the services. A single checkout request can be visually traced as it hops from the API Gateway, to the Order Service, to the Payment Service, and into DynamoDB.
+
+---
+
+## 💻 7. How to Run the Project (Detailed Setup)
+
+Since this is a fully automated Cloud-Native architecture, running the project involves authenticating with AWS and letting our code build the environment for you.
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/kanishgask/Ecommerce-EuphoriaX.git
+cd Ecommerce-EuphoriaX
+```
+
+### Step 2: Configure AWS Credentials
+You must have the AWS CLI installed and configured with Administrator (or equivalent Learner Lab) access.
+```bash
+aws configure
+# Enter your AWS Access Key ID, Secret Access Key, and Default Region (e.g., ap-southeast-1)
+```
+
+### Step 3: Automatically Provision the Cloud Infrastructure
+Navigate into the `terraform` directory. This step will automatically log into your AWS account and build the API Gateway, all 8 Lambda functions, all 7 DynamoDB tables, and the CloudWatch Dashboards.
 ```bash
 cd terraform
 terraform init
 terraform apply -auto-approve
 ```
-*Result: Terraform securely creates the API Gateway, 8 Lambda shells, 7 DynamoDB tables, and CloudWatch dashboards in seconds.*
+*Note: Wait a few minutes for Terraform to finish building the environment. It will output an `api_gateway_url` when finished.*
 
-### Step 2: Trigger GitHub Actions Deployment
-Because the Infrastructure now exists, push a commit to the `main` branch. 
-*Result: GitHub Actions will automatically scan the code (Snyk/Sonar), package all 8 microservices, and deploy them directly into the AWS Lambda shells.*
+### Step 4: Deploy the Microservices Code via GitHub Actions
+Now that the infrastructure exists, the actual code must be injected into the Lambdas.
+1. Go to your repository on GitHub.
+2. Navigate to **Settings > Secrets and variables > Actions**.
+3. Add your AWS credentials as secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`).
+4. Navigate to the **Actions** tab.
+5. Click on the latest workflow run and click **Re-run all jobs**.
+*GitHub Actions will now zip all 8 microservices and instantly deploy them into your new AWS infrastructure.*
 
-### Step 3: Run the Modern Frontend
+### Step 5: Start the Local Frontend
+Open a new terminal window, grab the API Gateway URL generated from Step 3, and run the React frontend.
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Create environment file
+echo "VITE_API_BASE_URL=<INSERT_API_GATEWAY_URL_HERE>" > .env
+
+# Start the application
 npm run dev
 ```
+Visit `http://localhost:5173` in your browser to experience the fully functional EuphoriaX platform!
 
 ---
 
-## 📸 5. Interface Showcase
+## 📸 8. Interface Showcase
 
 *Replace these placeholders with actual screenshots of your fully working deployment.*
 
@@ -163,7 +190,7 @@ npm run dev
 
 ---
 
-## 👨‍💻 6. Author & License
+## 👨‍💻 9. Author & License
 
 **Kanishga S**
 * **GitHub:** [@kanishgask](https://github.com/kanishgask)
