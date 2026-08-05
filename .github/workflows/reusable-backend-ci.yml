@@ -54,6 +54,20 @@ jobs:
           path: ${{ inputs.service_path }}/coverage/
           retention-days: 7
           
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          projectBaseDir: ${{ inputs.service_path }}
+          args: >
+            -Dsonar.projectKey=euphoriax-${{ inputs.service_name }}
+            -Dsonar.sources=.
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.exclusions=node_modules/**,coverage/**,**/*.test.js
+
       - name: Prune Dev Dependencies
         working-directory: ${{ inputs.service_path }}
         run: npm prune --production
