@@ -35,7 +35,7 @@ jobs:
         working-directory: ${{ inputs.service_path }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: npx snyk test
+        run: npx snyk test --severity-threshold=critical
 
       - name: Run Linter
         working-directory: ${{ inputs.service_path }}

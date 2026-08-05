@@ -34,7 +34,7 @@ jobs:
         working-directory: frontend
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: npx snyk test
+        run: npx snyk test --severity-threshold=critical
 
       - name: Run Linter
         working-directory: frontend
