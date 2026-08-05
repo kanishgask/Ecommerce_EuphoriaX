@@ -24,6 +24,7 @@ async function authenticate(req, res, next) {
     };
     next();
   } catch (err) {
+    console.error('JWT Verification Error:', err);
     next(new AppError('Invalid or expired token', 401));
   }
 }
