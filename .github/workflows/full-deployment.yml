@@ -23,6 +23,7 @@ jobs:
     with:
       service_name: ${{ matrix.service }}
       service_path: backend/${{ matrix.service }}
+    secrets: inherit
 
 
 
