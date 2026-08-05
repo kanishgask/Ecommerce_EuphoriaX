@@ -5,7 +5,6 @@ on:
     paths:
       - 'backend/email-consumer/**'
       - '.github/workflows/email-consumer.yml'
-      - '.github/workflows/deploy-email-consumer.yml'
     branches:
       - ci-cd
       - main
@@ -17,10 +16,4 @@ jobs:
     with:
       service_name: email-consumer
       service_path: backend/email-consumer
-    secrets: inherit
-
-  trigger_cd:
-    needs: ci
-    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/deploy-email-consumer.yml
     secrets: inherit

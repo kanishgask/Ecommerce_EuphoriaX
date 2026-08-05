@@ -5,7 +5,6 @@ on:
     paths:
       - 'backend/order-service/**'
       - '.github/workflows/order-service.yml'
-      - '.github/workflows/deploy-order.yml'
     branches:
       - ci-cd
       - main
@@ -17,10 +16,4 @@ jobs:
     with:
       service_name: order-service
       service_path: backend/order-service
-    secrets: inherit
-
-  trigger_cd:
-    needs: ci
-    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/deploy-order.yml
     secrets: inherit

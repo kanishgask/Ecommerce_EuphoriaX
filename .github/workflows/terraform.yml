@@ -46,3 +46,8 @@ jobs:
       - name: Terraform Plan
         working-directory: terraform
         run: terraform plan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci-cd'
+        working-directory: terraform
+        run: terraform apply -auto-approve
