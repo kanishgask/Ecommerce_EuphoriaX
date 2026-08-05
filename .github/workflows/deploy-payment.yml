@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: payment-service
-      service_path: backend/backend/payment-service
+      service_path: backend/payment-service
     secrets: inherit

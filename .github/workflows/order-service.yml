@@ -3,7 +3,7 @@ name: CI - Order Service
 on:
   push:
     paths:
-      - 'backend/backend/order-service/**'
+      - 'backend/order-service/**'
       - '.github/workflows/order-service.yml'
       - '.github/workflows/deploy-order.yml'
     branches:
@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/reusable-backend-ci.yml
     with:
       service_name: order-service
-      service_path: backend/backend/order-service
+      service_path: backend/order-service
 
   trigger_cd:
     needs: ci

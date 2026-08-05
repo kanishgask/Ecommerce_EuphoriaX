@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: product-service
-      service_path: backend/backend/product-service
+      service_path: backend/product-service
     secrets: inherit

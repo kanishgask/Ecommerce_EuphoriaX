@@ -9,5 +9,5 @@ jobs:
     uses: ./.github/workflows/reusable-backend-deploy.yml
     with:
       service_name: auth-service
-      service_path: backend/backend/auth-service
+      service_path: backend/auth-service
     secrets: inherit

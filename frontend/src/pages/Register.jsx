@@ -35,8 +35,8 @@ const Register = () => {
         name: formData.name
       });
       
-      toast.success('Registration successful! Please check your email to verify your account or sign in directly.');
-      navigate('/login');
+      toast.success('Registration successful! Please check your email for the verification code.');
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
