@@ -15,17 +15,7 @@ const Login = () => {
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleQuickDemo = (type) => {
-    if (type === 'ADMIN') {
-      setEmail('admin@euphoria.com');
-      setPassword('Admin@123');
-      toast.success("Loaded Demo Admin credentials!");
-    } else {
-      setEmail('customer@euphoria.com');
-      setPassword('User@123');
-      toast.success("Loaded Demo Customer credentials!");
-    }
-  };
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -189,17 +179,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Quick Demo Credentials Fill Button */}
-            <div className="pt-1">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo(loginType)}
-                className="w-full py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-gray-300 flex items-center justify-center gap-1.5 transition-all"
-              >
-                <Key size={13} className={loginType === 'ADMIN' ? "text-amber-400" : "text-primary-400"} />
-                <span>Click to fill demo {loginType === 'ADMIN' ? 'Admin' : 'Customer'} credentials</span>
-              </button>
-            </div>
+
 
             <button
               type="submit"

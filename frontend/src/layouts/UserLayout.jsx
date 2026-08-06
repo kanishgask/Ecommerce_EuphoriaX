@@ -30,7 +30,7 @@ export default function UserLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-dark-950 text-white font-sans selection:bg-primary-600 selection:text-white">
       {/* Navbar */}
-      <header className={`fixed top-0 w-full z-40 transition-all duration-300 ${scrolled ? 'glass-panel py-3 border-b border-white/5' : 'bg-transparent py-5'}`}>
+      <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'glass-panel py-3 border-b border-white/5' : 'bg-transparent py-5'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
           {/* Logo */}
           <Link to="/home" className="text-2xl font-black tracking-tighter">

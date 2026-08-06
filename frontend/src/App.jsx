@@ -16,6 +16,7 @@ import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import UserOrders from './pages/UserOrders';
+import Profile from './pages/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/Products';
 import AdminOrders from './pages/admin/Orders';
@@ -63,6 +64,7 @@ function App() {
           <Route path="products/:slug" element={<ProductDetail />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="orders" element={<UserOrders />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Admin Routes */}

@@ -200,6 +200,7 @@ const UserOrders = () => {
 
     return {
       id,
+      email: o.email || 'customer@euphoria.com',
       date: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : (o.date || fallback.date),
       status,
       total: typeof o.totalAmount === 'number' ? `$${o.totalAmount.toFixed(2)}` : (o.total || fallback.total),
@@ -254,7 +255,13 @@ const UserOrders = () => {
     toast.success(`Added ${order.items.length} item(s) from Order #${order.id} to your shopping bag!`);
   };
 
-  const filteredOrders = orders.filter(o => {
+  const myOrders = orders.filter(o => {
+    // Only show orders belonging to the current user
+    if (user?.email && o.email && o.email !== user.email) return false;
+    return true;
+  });
+
+  const filteredOrders = myOrders.filter(o => {
     if (activeTab === 'ACTIVE') return o.status !== 'DELIVERED' && o.status !== 'CANCELLED';
     if (activeTab === 'DELIVERED') return o.status === 'DELIVERED';
     return true;
@@ -290,21 +297,21 @@ const UserOrders = () => {
             onClick={() => setActiveTab('ALL')} 
             className={`pb-4 font-bold text-sm transition-all relative ${activeTab === 'ALL' ? 'text-primary-400' : 'text-gray-400 hover:text-white'}`}
           >
-            All Orders ({orders.length})
+            All Orders ({myOrders.length})
             {activeTab === 'ALL' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 rounded-full" />}
           </button>
           <button 
             onClick={() => setActiveTab('ACTIVE')} 
             className={`pb-4 font-bold text-sm transition-all relative ${activeTab === 'ACTIVE' ? 'text-primary-400' : 'text-gray-400 hover:text-white'}`}
           >
-            Active & In Transit ({orders.filter(o => o.status !== 'DELIVERED').length})
+            Active & In Transit ({myOrders.filter(o => o.status !== 'DELIVERED').length})
             {activeTab === 'ACTIVE' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 rounded-full" />}
           </button>
           <button 
             onClick={() => setActiveTab('DELIVERED')} 
             className={`pb-4 font-bold text-sm transition-all relative ${activeTab === 'DELIVERED' ? 'text-primary-400' : 'text-gray-400 hover:text-white'}`}
           >
-            Completed & Delivered ({orders.filter(o => o.status === 'DELIVERED').length})
+            Completed & Delivered ({myOrders.filter(o => o.status === 'DELIVERED').length})
             {activeTab === 'DELIVERED' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 rounded-full" />}
           </button>
         </div>

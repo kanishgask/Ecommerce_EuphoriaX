@@ -59,17 +59,7 @@ describe('Login Page', () => {
     expect(screen.getByPlaceholderText('admin@euphoria.com')).toBeDefined();
   });
 
-  it('handles quick demo credentials filling for USER', () => {
-    renderComponent();
-    const demoBtn = screen.getByText(/Click to fill demo Customer credentials/i);
-    fireEvent.click(demoBtn);
 
-    const emailInput = screen.getByPlaceholderText('customer@euphoria.com');
-    const passInput = screen.getByPlaceholderText('••••••••');
-    
-    expect(emailInput.value).toBe('customer@euphoria.com');
-    expect(passInput.value).toBe('User@123');
-  });
 
   it('submits form successfully and navigates to home', async () => {
     authService.login.mockResolvedValueOnce({ data: { data: { accessToken: 'token123' } } });
