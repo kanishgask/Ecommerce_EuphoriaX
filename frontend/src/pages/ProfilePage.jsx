@@ -8,6 +8,7 @@ import { User, Package, Heart, CreditCard, Bell, Settings, LogOut, Check, X, Clo
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectWishlistItems, toggleWishlist } from '../store/slices/wishlistSlice';
+import { selectUser, logout } from '../store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 const TABS = [
@@ -24,9 +25,10 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const wishlistItems = useSelector(selectWishlistItems);
+  const user = useSelector(selectUser);
 
   const handleSignOut = () => {
-    localStorage.removeItem('isAuthenticated');
+    dispatch(logout());
     toast.success('Signed out successfully');
     navigate('/welcome');
   };
@@ -41,11 +43,11 @@ export default function ProfilePage() {
             <Card className="p-4 sticky top-24">
               <div className="flex items-center gap-4 mb-6 p-2">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-                  JD
+                  {user?.firstName?.charAt(0) || 'U'}{user?.lastName?.charAt(0) || ''}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">John Doe</h3>
-                  <p className="text-sm text-white/50">john@example.com</p>
+                  <h3 className="font-semibold text-white">{user?.fullName || 'User'}</h3>
+                  <p className="text-sm text-white/50">{user?.email || 'Loading...'}</p>
                 </div>
               </div>
               
@@ -290,11 +292,11 @@ export default function ProfilePage() {
                   <Card className="p-6 bg-[#162028] border-white/5 space-y-6">
                     <h3 className="font-semibold text-lg text-white border-b border-white/10 pb-4">Personal Information</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <Input label="First Name" defaultValue="John" />
-                      <Input label="Last Name" defaultValue="Doe" />
+                      <Input label="First Name" defaultValue={user?.firstName || ''} />
+                      <Input label="Last Name" defaultValue={user?.lastName || ''} />
                     </div>
-                    <Input label="Email Address" type="email" defaultValue="john@example.com" />
-                    <Input label="Phone Number" type="tel" defaultValue="+1 (555) 123-4567" />
+                    <Input label="Email Address" type="email" defaultValue={user?.email || ''} readOnly />
+                    <Input label="Phone Number" type="tel" defaultValue="" />
                     <div className="flex justify-end pt-4 border-t border-white/10 mt-6">
                       <Button onClick={() => toast.success('Profile updated successfully!')}>Save Changes</Button>
                     </div>

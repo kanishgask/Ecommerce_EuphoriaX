@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, Star, Share2, Truck, ShieldCheck, ArrowLeft, Minus, Plus } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addToCart } from '../store/slices/cartSlice';
+import { addToCart, syncAddItem } from '../store/slices/cartSlice';
 import { toggleWishlist, selectWishlistItems } from '../store/slices/wishlistSlice';
 import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,23 +10,43 @@ import ProductReviews from '../components/product/ProductReviews';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import PageTransition from '../components/shared/PageTransition';
-import { PRODUCTS } from '../data/products';
+import api from '../services/api';
 
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  const product = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('reviews');
   const dispatch = useDispatch();
   const wishlistItems = useSelector(selectWishlistItems);
-  const isWishlisted = wishlistItems.some(i => i.id === product.id);
+  
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get(`/products/${id}`);
+        setProduct(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch product details:', error);
+        toast.error('Failed to load product details');
+        navigate('/shop');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id, navigate]);
+
+  const isWishlisted = product ? wishlistItems.some(i => i.id === product.id) : false;
 
   const handleAddToCart = () => {
     dispatch(addToCart({ ...product, quantity }));
+    dispatch(syncAddItem({ productId: product.id, quantity }));
     toast.success('Added to cart');
   };
 
@@ -41,7 +61,13 @@ export default function ProductPage() {
           <ArrowLeft className="w-4 h-4" /> Back to Shop
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-12">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-96">
+            <div className="text-cyan-400 font-medium text-lg">Loading product details...</div>
+          </div>
+        ) : product ? (
+          <>
+            <div className="flex flex-col lg:flex-row gap-12">
           
           {/* Left: Image Gallery */}
           <div className="w-full lg:w-1/2 space-y-4">
@@ -201,10 +227,16 @@ export default function ProductPage() {
               </motion.div>
             )}
             {activeTab === 'reviews' && (
-              <ProductReviews productId={id || PRODUCT.id} />
+              <ProductReviews productId={id} />
             )}
           </div>
         </div>
+      </>
+        ) : (
+          <div className="flex justify-center items-center h-96">
+            <div className="text-red-400 font-medium text-lg">Product not found.</div>
+          </div>
+        )}
       </div>
     </PageTransition>
   );

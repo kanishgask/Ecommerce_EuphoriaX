@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const productRepository = require('../repositories/product.repository');
+const AppError = require('../utils/AppError');
 
 class ProductService {
   async createProduct(data) {
@@ -15,9 +16,7 @@ class ProductService {
   async getProductById(id) {
     const product = await productRepository.getProductById(id);
     if (!product) {
-      const error = new Error('Product not found');
-      error.statusCode = 404;
-      throw error;
+      throw new AppError('Product not found', 404);
     }
     return product;
   }
@@ -34,19 +33,19 @@ class ProductService {
     await productRepository.deleteProduct(id);
   }
 
-  async searchProducts(filters) {
-    let products = await productRepository.getAllProducts({ category: filters.category });
+  async searchProducts(filters, limit, lastEvaluatedKey) {
+    let result = await productRepository.getAllProducts({ category: filters.category }, limit, lastEvaluatedKey);
     
     // In-memory text search fallback for prototype
     if (filters.query) {
       const query = filters.query.toLowerCase();
-      products = products.filter(p => 
+      result.items = result.items.filter(p => 
         p.name.toLowerCase().includes(query) || 
         p.description.toLowerCase().includes(query)
       );
     }
 
-    return products;
+    return result;
   }
 }
 

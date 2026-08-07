@@ -46,9 +46,20 @@ class ProductController {
 
   async searchProducts(req, res, next) {
     try {
-      const value = await searchSchema.validateAsync(req.query);
-      const products = await productService.searchProducts(value);
-      res.status(200).json({ success: true, data: products });
+      const { limit = 20, lastEvaluatedKey, ...filters } = req.query;
+      const value = await searchSchema.validateAsync(filters);
+      
+      const parsedLimit = parseInt(limit, 10);
+      const result = await productService.searchProducts(value, parsedLimit, lastEvaluatedKey);
+      
+      res.status(200).json({ 
+        success: true, 
+        data: result.items,
+        meta: {
+          lastEvaluatedKey: result.lastEvaluatedKey,
+          limit: parsedLimit
+        }
+      });
     } catch (error) {
       next(error);
     }

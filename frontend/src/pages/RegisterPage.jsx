@@ -7,8 +7,9 @@ import Card from '../components/ui/Card';
 import { User, Mail, Lock, Eye, EyeOff, Check, X, Smartphone } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const registerSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -42,11 +43,19 @@ export default function RegisterPage() {
     
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call the live AWS API Gateway endpoint
+      await api.post('/auth/register', {
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName
+      });
+      
       toast.success('Registration successful! Please verify your email.');
-      navigate('/verify'); 
+      navigate('/verify', { state: { email: data.email } }); 
     } catch (error) {
-      toast.error('Registration failed');
+      console.error("Registration error:", error.response?.data || error);
+      toast.error(error.response?.data?.message || 'Registration failed. Check if user already exists.');
     } finally {
       setIsLoading(false);
     }

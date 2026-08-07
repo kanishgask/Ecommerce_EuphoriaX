@@ -1,44 +1,55 @@
-const emailService = require('./email.service');
+const { GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { ddbDocClient } = require('../config/aws');
+const emailUtil = require('../utils/email');
+const logger = require('../utils/logger');
 
 class NotificationService {
-  async sendOrderConfirmation(data) {
-    const { email, orderId, totalAmount, userName } = data;
-    
-    const subject = `Order Confirmation - #${orderId}`;
-    const text = `Hi ${userName},\n\nThank you for your order! Your order #${orderId} for $${totalAmount} has been confirmed.`;
-    const html = `
-      <h2>Hi ${userName},</h2>
-      <p>Thank you for your order!</p>
-      <p>Your order <strong>#${orderId}</strong> for <strong>$${totalAmount}</strong> has been confirmed.</p>
-    `;
+  async processPaymentEvent(orderId, amount, status) {
+    try {
+      // 1. Fetch Order from DynamoDB to get the userId and items
+      const orderParams = {
+        TableName: process.env.DYNAMODB_ORDERS_TABLE || 'K_Orders',
+        Key: { id: orderId }
+      };
+      
+      const { Item: order } = await ddbDocClient.send(new GetCommand(orderParams));
+      
+      if (!order) {
+        logger.error(`Order ${orderId} not found in database. Cannot send email.`);
+        return { success: false, message: 'Order not found' };
+      }
 
-    await emailService.sendEmail(email, subject, text, html);
-    return { success: true, message: 'Order confirmation email sent' };
-  }
+      const { userId, totalAmount } = order;
 
-  async sendPaymentConfirmation(data) {
-    const { email, orderId, amount, status, userName } = data;
-    
-    const subject = `Payment ${status === 'SUCCESS' ? 'Successful' : 'Failed'} - Order #${orderId}`;
-    
-    let text, html;
-    if (status === 'SUCCESS') {
-      text = `Hi ${userName},\n\nWe have successfully received your payment of $${amount} for order #${orderId}.`;
-      html = `
-        <h2>Hi ${userName},</h2>
-        <p>We have successfully received your payment of <strong>$${amount}</strong> for order <strong>#${orderId}</strong>.</p>
-      `;
-    } else {
-      text = `Hi ${userName},\n\nYour payment of $${amount} for order #${orderId} was declined. Please try again.`;
-      html = `
-        <h2>Hi ${userName},</h2>
-        <p style="color: red;">Your payment of <strong>$${amount}</strong> for order <strong>#${orderId}</strong> was declined.</p>
-        <p>Please update your payment method and try again.</p>
-      `;
+      // 2. Fetch User from DynamoDB to get the email address
+      const userParams = {
+        TableName: process.env.DYNAMODB_USERS_TABLE || 'K_Users',
+        Key: { id: userId }
+      };
+
+      const { Item: user } = await ddbDocClient.send(new GetCommand(userParams));
+
+      if (!user || !user.email) {
+        logger.error(`User ${userId} not found or has no email. Cannot send email.`);
+        return { success: false, message: 'User or email not found' };
+      }
+
+      const { email, firstName } = user;
+
+      // 3. Send Email using Nodemailer
+      if (status === 'SUCCESS') {
+        await emailUtil.sendOrderConfirmation(email, orderId, totalAmount, firstName);
+      } else {
+        logger.warn(`Payment failed for order ${orderId}. Sending failure email (Not implemented yet).`);
+      }
+
+      // In a real app, you would also save the notification receipt to K_Notifications table here.
+      
+      return { success: true, message: 'Payment confirmation email sent' };
+    } catch (error) {
+      logger.error('Error processing payment event for notification:', error);
+      throw error;
     }
-
-    await emailService.sendEmail(email, subject, text, html);
-    return { success: true, message: 'Payment confirmation email sent' };
   }
 }
 

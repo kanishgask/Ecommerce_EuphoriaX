@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, Search, Filter, ChevronDown, Check, Star } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addToCart } from '../store/slices/cartSlice';
+import { addToCart, syncAddItem } from '../store/slices/cartSlice';
 import { toggleWishlist, selectWishlistItems } from '../store/slices/wishlistSlice';
 import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import PageTransition from '../components/shared/PageTransition';
-
-import { PRODUCTS } from '../data/products';
+import api from '../services/api';
 
 const CATEGORIES = ['All Categories', 'Accessories', 'Electronics', 'Footwear', 'Fashion'];
 
@@ -40,6 +39,8 @@ export default function ShopPage() {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [priceRange, setPriceRange] = useState(1000);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
   const wishlistItems = useSelector(selectWishlistItems);
 
@@ -47,6 +48,22 @@ export default function ShopPage() {
     setSearchQuery(searchParams.get('q') || '');
     setActiveCategory(searchParams.get('category') || 'All Categories');
   }, [location.search]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        const response = await api.get('/products');
+        setProducts(response.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        toast.error('Failed to load products');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleSearchChange = (e) => {
     const val = e.target.value;
@@ -75,10 +92,11 @@ export default function ShopPage() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart({ ...product, quantity: 1 }));
+    dispatch(syncAddItem({ productId: product.id, quantity: 1 }));
     toast.success('Added to cart');
   };
 
-  const filteredProducts = PRODUCTS.filter(p => 
+  const filteredProducts = products.filter(p => 
     (activeCategory === 'All Categories' || p.category === activeCategory) &&
     p.price <= priceRange &&
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -241,7 +259,13 @@ export default function ShopPage() {
             </AnimatePresence>
           </div>
 
-          {filteredProducts.length === 0 && (
+          {isLoading && (
+            <div className="text-center py-24 text-cyan-400 font-medium">
+              Loading products...
+            </div>
+          )}
+
+          {!isLoading && filteredProducts.length === 0 && (
             <div className="text-center py-24 text-white/50">
               No products found matching your criteria.
             </div>

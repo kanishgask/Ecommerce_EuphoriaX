@@ -1,9 +1,27 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api from '../../services/api';
 
 const initialState = {
   items: [],
   isDrawerOpen: false,
 };
+
+// Async Thunks to sync with Backend Cart Service
+export const syncAddItem = createAsyncThunk('cart/syncAddItem', async ({ productId, quantity }) => {
+  await api.post('/cart/items', { productId, quantity });
+});
+
+export const syncUpdateQuantity = createAsyncThunk('cart/syncUpdateQuantity', async ({ productId, quantity }) => {
+  await api.put(`/cart/items/${productId}`, { quantity });
+});
+
+export const syncRemoveItem = createAsyncThunk('cart/syncRemoveItem', async (productId) => {
+  await api.delete(`/cart/items/${productId}`);
+});
+
+export const syncClearCart = createAsyncThunk('cart/syncClearCart', async () => {
+  await api.delete('/cart');
+});
 
 export const cartSlice = createSlice({
   name: 'cart',

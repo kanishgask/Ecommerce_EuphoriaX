@@ -1,6 +1,7 @@
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+const AWSXRay = require('aws-xray-sdk-core');
 
-const snsClient = new SNSClient({ region: process.env.AWS_REGION || 'us-east-1' });
+const snsClient = AWSXRay.captureAWSv3Client(new SNSClient({ region: process.env.AWS_REGION || 'us-east-1' }));
 
 class EventPublisher {
   async publish(topicArn, eventType, payload) {

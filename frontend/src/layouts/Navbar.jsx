@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, User, Search, Menu, X, Bell } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleDrawer, selectCartItemsCount } from '../store/slices/cartSlice';
+import { selectUser } from '../store/slices/authSlice';
 import { cn } from '../utils/cn';
 
 export default function Navbar() {
@@ -15,6 +16,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartCount = useSelector(selectCartItemsCount);
+  const user = useSelector(selectUser);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function Navbar() {
             </button>
             
             <Link to="/profile" className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-[#0b1114] transition-all duration-300">
-              <span className="font-bold text-xs">K</span>
+              <span className="font-bold text-xs">{user ? user.firstName.charAt(0).toUpperCase() : 'U'}</span>
             </Link>
             
             {/* Mobile Menu Toggle */}

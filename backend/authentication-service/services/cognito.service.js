@@ -3,7 +3,7 @@ const {
   InitiateAuthCommand, 
   ForgotPasswordCommand, 
   ConfirmForgotPasswordCommand,
-  AdminConfirmSignUpCommand
+  ConfirmSignUpCommand
 } = require('@aws-sdk/client-cognito-identity-provider');
 const { cognitoClient } = require('../config/aws');
 const config = require('../config/config');
@@ -24,13 +24,14 @@ class CognitoService {
     return response.UserSub; // The unique ID for the user
   }
 
-  // Auto-confirm for development purposes. In prod, you'd verify email.
-  async adminConfirmSignUp(email) {
+  // Verify email with code sent to user
+  async confirmSignUp(email, code) {
     const params = {
-      UserPoolId: config.aws.cognito.userPoolId,
-      Username: email
+      ClientId: config.aws.cognito.clientId,
+      Username: email,
+      ConfirmationCode: code
     };
-    await cognitoClient.send(new AdminConfirmSignUpCommand(params));
+    await cognitoClient.send(new ConfirmSignUpCommand(params));
   }
 
   async login(email, password) {

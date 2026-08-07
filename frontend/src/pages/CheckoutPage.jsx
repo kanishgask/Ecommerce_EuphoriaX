@@ -13,6 +13,8 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { jsPDF } from "jspdf";
 import confetti from 'canvas-confetti';
+import api from '../services/api';
+import { syncClearCart } from '../store/slices/cartSlice';
 
 const STEPS = ['Shipping', 'Review', 'Payment', 'Confirmation'];
 
@@ -43,7 +45,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { register: registerShipping, handleSubmit: submitShipping } = useForm();
+  const { register: registerShipping, handleSubmit: submitShipping, getValues: getShippingValues } = useForm();
   const { register: registerPayment, handleSubmit: submitPayment } = useForm();
 
   // Calculate final total (adding mock shipping & tax)
@@ -58,7 +60,7 @@ export default function CheckoutPage() {
     
     if (status) {
       if (status === 'success') {
-        handlePaymentSuccess(returnedPaymentId);
+        handlePaymentSuccess(returnedPaymentId, searchParams.get('order_id'));
       } else {
         handlePaymentFailure();
       }
@@ -79,6 +81,11 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async (data) => {
+    if (items.length === 0) {
+      toast.error("Your cart is empty! Please add some items before checking out.");
+      return;
+    }
+
     if (paymentMethod === 'upi' && upiMode === 'id') {
       const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
       if (!upiRegex.test(upiId)) {
@@ -93,7 +100,23 @@ export default function CheckoutPage() {
     await simulateLoadingSequence();
 
     try {
-      // Create order via our mock backend service
+      // 1. Create order in our actual backend!
+      const shippingAddress = getShippingValues();
+      const orderPayload = {
+        items: items.map(i => ({ productId: i.id, quantity: i.quantity, price: i.price })),
+        shippingAddress: {
+          street: shippingAddress.address,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zipCode: shippingAddress.zip,
+          country: 'USA' // Mock country since it's not in the form
+        }
+      };
+      
+      const orderRes = await api.post('/orders', orderPayload);
+      const createdOrder = orderRes.data.data;
+
+      // 2. Mock Payment Gateway initialization
       const response = await dispatch(initiatePayment({
         amount: finalTotal,
         method: paymentMethod,
@@ -102,23 +125,35 @@ export default function CheckoutPage() {
       
       if (paymentMethod === 'cod') {
         // Direct success for COD
-        handlePaymentSuccess('COD_' + Date.now());
+        handlePaymentSuccess('COD_' + Date.now(), createdOrder.id);
       } else {
-        // Redirect to Demo Bank
-        navigate(`/mock-bank?order_id=${response.id}&amount=${finalTotal}&method=${paymentMethod}`);
+        // Redirect to Demo Bank (pass our real orderId)
+        navigate(`/mock-bank?order_id=${createdOrder.id}&amount=${finalTotal}&method=${paymentMethod}`);
       }
     } catch (err) {
-      toast.error('Failed to initialize payment gateway.');
+      console.error('Order Creation Error:', err.response?.data || err);
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to create order or initialize payment.';
+      toast.error(errorMsg);
       setIsProcessing(false);
     }
   };
 
-  const handlePaymentSuccess = (returnedPaymentId) => {
+  const handlePaymentSuccess = async (returnedPaymentId, realOrderId) => {
     setIsProcessing(false);
     setPaymentId(returnedPaymentId);
-    setOrderId(`EU-${(Math.random() * 1000000).toFixed(0)}`);
+    setOrderId(realOrderId || searchParams.get('order_id') || `EU-${(Math.random() * 1000000).toFixed(0)}`);
     setCurrentStep(3); // Go to Confirmation
     
+    // Update order status in backend
+    try {
+      const currentOrderId = realOrderId || searchParams.get('order_id');
+      if (currentOrderId) {
+        await api.patch(`/orders/${currentOrderId}/status`, { status: 'PAID' });
+      }
+    } catch (e) {
+      console.error('Failed to update order status', e);
+    }
+
     // Fire Confetti
     const duration = 3 * 1000;
     const end = Date.now() + duration;
@@ -141,8 +176,9 @@ export default function CheckoutPage() {
     };
     frame();
 
-    // Process Order (Empty cart, etc.)
+    // Process Order (Empty cart locally and in backend)
     dispatch(clearCart());
+    dispatch(syncClearCart());
   };
 
   const handlePaymentFailure = () => {

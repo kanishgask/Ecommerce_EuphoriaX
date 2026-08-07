@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const orderRepository = require('../repositories/order.repository');
 const eventPublisher = require('../utils/publisher');
+const AppError = require('../utils/AppError');
 
 class OrderService {
   async createOrder(userId, orderData) {
@@ -42,15 +43,11 @@ class OrderService {
     const order = await orderRepository.getOrderById(orderId);
     
     if (!order) {
-      const error = new Error('Order not found');
-      error.statusCode = 404;
-      throw error;
+      throw new AppError('Order not found', 404);
     }
 
     if (order.userId !== userId) {
-      const error = new Error('Unauthorized access to order');
-      error.statusCode = 403;
-      throw error;
+      throw new AppError('Unauthorized access to order', 403);
     }
 
     return order;
@@ -64,9 +61,7 @@ class OrderService {
     // This is typically called by an admin or by background SQS workers processing payment events
     const order = await orderRepository.getOrderById(orderId);
     if (!order) {
-      const error = new Error('Order not found');
-      error.statusCode = 404;
-      throw error;
+      throw new AppError('Order not found', 404);
     }
 
     return await orderRepository.updateOrderStatus(orderId, status);

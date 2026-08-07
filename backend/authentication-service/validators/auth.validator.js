@@ -14,6 +14,11 @@ const loginSchema = Joi.object({
   password: Joi.string().required()
 });
 
+const verifyEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+  code: Joi.string().length(6).required()
+});
+
 const forgotPasswordSchema = Joi.object({
   email: Joi.string().email().required()
 });
@@ -27,6 +32,7 @@ const resetPasswordSchema = Joi.object({
 module.exports = {
   registerSchema,
   loginSchema,
+  verifyEmailSchema,
   forgotPasswordSchema,
   resetPasswordSchema
 };

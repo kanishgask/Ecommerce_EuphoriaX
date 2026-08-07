@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import { Mail, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 export default function VerifyEmailPage() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -12,10 +13,16 @@ export default function VerifyEmailPage() {
   const [isVerified, setIsVerified] = useState(false);
   const inputs = useRef([]);
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email;
 
   useEffect(() => {
+    if (!email) {
+      toast.error('Session expired. Please register again.');
+      navigate('/register');
+    }
     if (inputs.current[0]) inputs.current[0].focus();
-  }, []);
+  }, [email, navigate]);
 
   const handleChange = (e, index) => {
     const value = e.target.value;
@@ -37,19 +44,26 @@ export default function VerifyEmailPage() {
   };
 
   const handleVerify = async () => {
-    if (code.join('').length !== 6) {
+    const verificationCode = code.join('');
+    if (verificationCode.length !== 6) {
       toast.error('Please enter the 6-digit code');
       return;
     }
 
     setIsVerifying(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await api.post('/auth/verify-email', {
+        email: email,
+        code: verificationCode
+      });
+      
       setIsVerified(true);
       toast.success('Email verified successfully!');
       setTimeout(() => navigate('/login'), 2000);
     } catch (error) {
-      toast.error('Invalid verification code');
+      console.error('Verification error:', error);
+      toast.error(error.response?.data?.message || 'Invalid verification code');
+    } finally {
       setIsVerifying(false);
     }
   };

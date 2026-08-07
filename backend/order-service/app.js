@@ -2,15 +2,58 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 const orderRoutes = require('./routes/order.routes');
 const errorHandler = require('./middlewares/error.middleware');
+const logger = require('./utils/logger');
 
 const app = express();
 
+// Security Middleware
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
-app.use(morgan('dev'));
+app.use(express.json({ limit: '10kb' })); // Body parser limit
+app.use(xss()); // Data sanitization against XSS
+
+// Rate Limiting
+const limiter = rateLimit({
+  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  message: 'Too many requests from this IP, please try again in 15 minutes!'
+});
+app.use('/api', limiter);
+
+// Logging Middleware
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// Swagger Configuration
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Order Service API',
+      version: '1.0.0',
+      description: 'API documentation for the Order Microservice'
+    },
+    servers: [{ url: '/api/v1' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{ bearerAuth: [] }]
+  },
+  apis: ['./routes/*.js']
+};
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -18,7 +61,9 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
+// We mount on both the exact path and the root, to ensure that if API Gateway strips the path in a {proxy+} setup, Express still handles the request correctly!
 app.use('/api/v1/orders', orderRoutes);
+app.use('/', orderRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

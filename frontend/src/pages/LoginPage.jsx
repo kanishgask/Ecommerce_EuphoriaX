@@ -7,8 +7,11 @@ import Card from '../components/ui/Card';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { toast } from 'react-hot-toast';
+import { useDispatch } from 'react-redux';
+import { loginSuccess } from '../store/slices/authSlice';
+import api from '../services/api';
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -20,6 +23,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema),
@@ -28,12 +32,20 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      localStorage.setItem('isAuthenticated', 'true');
+      // Call the live AWS API Gateway endpoint
+      const response = await api.post('/auth/login', {
+        email: data.email,
+        password: data.password
+      });
+      
+      const tokens = response.data.data;
+      dispatch(loginSuccess(tokens));
+      
       toast.success('Authentication successful!');
       navigate('/'); // Go to Home
     } catch (error) {
-      toast.error('Invalid credentials');
+      console.error("Login error:", error.response?.data || error);
+      toast.error(error.response?.data?.message || 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }

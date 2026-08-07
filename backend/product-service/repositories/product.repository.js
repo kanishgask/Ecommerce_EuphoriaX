@@ -59,12 +59,17 @@ class ProductRepository {
     await ddbDocClient.send(new DeleteCommand(params));
   }
 
-  async getAllProducts(filters = {}) {
-    // Note: In production, use Query or secondary indexes for performance. 
-    // Scan is acceptable here for prototype/demonstration.
+  async getAllProducts(filters = {}, limit = 20, lastEvaluatedKey = null) {
     const params = {
       TableName: config.aws.dynamodb.productsTable,
+      Limit: limit
     };
+
+    if (lastEvaluatedKey) {
+      params.ExclusiveStartKey = typeof lastEvaluatedKey === 'string' 
+        ? JSON.parse(Buffer.from(lastEvaluatedKey, 'base64').toString('ascii'))
+        : lastEvaluatedKey;
+    }
 
     if (filters.category) {
       params.FilterExpression = '#category = :category';
@@ -72,8 +77,17 @@ class ProductRepository {
       params.ExpressionAttributeValues = { ':category': filters.category };
     }
 
-    const { Items } = await ddbDocClient.send(new ScanCommand(params));
-    return Items || [];
+    const { Items, LastEvaluatedKey } = await ddbDocClient.send(new ScanCommand(params));
+    
+    // Encode LastEvaluatedKey as base64 string for clean API responses
+    const nextKey = LastEvaluatedKey 
+      ? Buffer.from(JSON.stringify(LastEvaluatedKey)).toString('base64')
+      : null;
+
+    return {
+      items: Items || [],
+      lastEvaluatedKey: nextKey
+    };
   }
 }
 

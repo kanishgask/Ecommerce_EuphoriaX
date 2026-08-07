@@ -1,7 +1,8 @@
 const authService = require('../services/auth.service');
 const { 
   registerSchema, 
-  loginSchema, 
+  loginSchema,
+  verifyEmailSchema,
   forgotPasswordSchema, 
   resetPasswordSchema 
 } = require('../validators/auth.validator');
@@ -22,6 +23,16 @@ class AuthController {
       const value = await loginSchema.validateAsync(req.body);
       const tokens = await authService.login(value);
       res.status(200).json({ success: true, data: tokens });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyEmail(req, res, next) {
+    try {
+      const value = await verifyEmailSchema.validateAsync(req.body);
+      await authService.verifyEmail(value.email, value.code);
+      res.status(200).json({ success: true, message: 'Email verified successfully' });
     } catch (error) {
       next(error);
     }

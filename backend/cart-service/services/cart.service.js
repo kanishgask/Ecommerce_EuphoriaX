@@ -1,4 +1,5 @@
 const cartRepository = require('../repositories/cart.repository');
+const AppError = require('../utils/AppError');
 
 class CartService {
   async getCart(userId) {
@@ -26,9 +27,7 @@ class CartService {
     
     const itemIndex = cart.items.findIndex(item => item.productId === productId);
     if (itemIndex === -1) {
-      const error = new Error('Item not found in cart');
-      error.statusCode = 404;
-      throw error;
+      throw new AppError('Item not found in cart', 404);
     }
 
     cart.items[itemIndex].quantity = quantity;
