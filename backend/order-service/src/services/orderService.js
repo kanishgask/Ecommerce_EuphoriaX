@@ -4,6 +4,9 @@ const cartClient = require('./cartClient');
 const { publishOrderEvent } = require('./eventPublisher');
 const { AppError } = require('../middleware/errorHandler');
 
+// Deliberate design tradeoff: Order starts in a pending/unconfirmed state.
+// Downstream services drive status transitions via events.
+// No automatic rollback/compensation is implemented yet.
 async function checkout(userId, accessToken, { shippingAddress }) {
   const cart = await cartClient.getCart(accessToken);
   if (!cart.items || cart.items.length === 0) {
