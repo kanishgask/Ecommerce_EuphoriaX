@@ -48,10 +48,12 @@ export default function CheckoutPage() {
   const { register: registerShipping, handleSubmit: submitShipping, getValues: getShippingValues } = useForm();
   const { register: registerPayment, handleSubmit: submitPayment } = useForm();
 
-  // Calculate final total (adding mock shipping & tax)
+  // Calculate final total (keep it exactly the same as cart total)
   useEffect(() => {
-    setFinalTotal((subtotal + 15 + (subtotal * 0.08)).toFixed(2));
-  }, [subtotal]);
+    if (currentStep < 3 && subtotal > 0) {
+      setFinalTotal(subtotal.toFixed(2));
+    }
+  }, [subtotal, currentStep]);
 
   // Handle Return from Demo Bank
   useEffect(() => {

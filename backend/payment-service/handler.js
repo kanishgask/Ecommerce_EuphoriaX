@@ -5,19 +5,36 @@ exports.processPaymentEvents = async (event) => {
 
   for (const record of event.Records) {
     try {
-      const snsMessage = JSON.parse(record.body);
-      const message = JSON.parse(snsMessage.Message);
-      const { eventType, payload } = message;
+      let snsMessage;
+      try {
+        snsMessage = typeof record.body === 'string' ? JSON.parse(record.body) : record.body;
+      } catch (err) {
+        console.error('Failed to parse record.body. Deleting poison message.', err.message, record.body);
+        continue;
+      }
+
+      let message;
+      // Handle both SNS Envelope and RawMessageDelivery
+      if (snsMessage.Message) {
+        try {
+          message = JSON.parse(snsMessage.Message);
+        } catch (e) {
+          message = snsMessage.Message; // Already an object?
+        }
+      } else {
+        message = snsMessage; // Raw delivery
+      }
+      
+      const { eventType, payload } = message || {};
 
       if (eventType === 'InventoryReserved') {
-        const { orderId } = payload;
+        const { orderId, userId, totalAmount } = payload;
         
-        // Mocking payment details for the async flow. 
-        // In a real app, this might pull saved card details from a secure vault.
-        const mockPaymentData = {
+        // Use real values passed from InventoryService
+        const paymentData = {
           orderId,
-          userId: 'system-async', // Or derived from order
-          amount: 100, // In reality, we'd fetch the order total
+          userId: userId || 'system-async', // Fallback just in case
+          amount: totalAmount || 100,
           paymentMethod: {
             cardNumber: '1234567812345678',
             expiry: '12/26',
@@ -26,7 +43,7 @@ exports.processPaymentEvents = async (event) => {
         };
 
         try {
-          await paymentService.processPayment(mockPaymentData);
+          await paymentService.processPayment(paymentData);
           console.log(`Payment processed for Order ${orderId}`);
         } catch (err) {
           console.error(`Payment failed for Order ${orderId}: ${err.message}`);

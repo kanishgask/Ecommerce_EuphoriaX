@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PageTransition from '../components/shared/PageTransition';
 import Card from '../components/ui/Card';
@@ -10,6 +10,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectWishlistItems, toggleWishlist } from '../store/slices/wishlistSlice';
 import { selectUser, logout } from '../store/slices/authSlice';
 import toast from 'react-hot-toast';
+import api from '../services/api';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: User },
@@ -21,11 +22,30 @@ const TABS = [
 ];
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = React.useState('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [orders, setOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const wishlistItems = useSelector(selectWishlistItems);
   const user = useSelector(selectUser);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await api.get('/orders');
+        setOrders(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+      } finally {
+        setIsLoadingOrders(false);
+      }
+    };
+    if (user) {
+      fetchOrders();
+    }
+  }, [user]);
 
   const handleSignOut = () => {
     dispatch(logout());
@@ -96,12 +116,14 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card glass={false} className="p-5 flex flex-col items-center justify-center text-center bg-[#162028] border-white/5">
                       <Package className="w-8 h-8 text-cyan-400 mb-2" />
-                      <span className="text-3xl font-bold text-white">12</span>
+                      <span className="text-3xl font-bold text-white">
+                        {isLoadingOrders ? <span className="animate-pulse">...</span> : orders.length}
+                      </span>
                       <span className="text-sm text-white/50">Total Orders</span>
                     </Card>
                     <Card glass={false} className="p-5 flex flex-col items-center justify-center text-center bg-[#162028] border-white/5">
                       <Heart className="w-8 h-8 text-red-500 mb-2" />
-                      <span className="text-3xl font-bold text-white">5</span>
+                      <span className="text-3xl font-bold text-white">{wishlistItems.length}</span>
                       <span className="text-sm text-white/50">Wishlist Items</span>
                     </Card>
                     <Card glass={false} className="p-5 flex flex-col items-center justify-center text-center bg-[#162028] border-white/5">
@@ -169,27 +191,41 @@ export default function ProfilePage() {
               {activeTab === 'orders' && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Order History</h2>
-                  {[1, 2, 3].map((order) => (
-                    <Card key={order} className="p-6 border border-white/5 bg-[#162028]">
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                        <div>
-                          <p className="text-cyan-400 font-bold mb-1">Order #EU-{Math.floor(Math.random() * 1000000)}</p>
-                          <p className="text-sm text-white/50">Placed on {new Date(Date.now() - order * 86400000).toLocaleDateString()}</p>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold ${order === 1 ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
-                          {order === 1 ? 'Delivered' : 'In Transit'}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 border-t border-white/10 pt-4">
-                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80" alt="Item" className="w-16 h-16 rounded-xl object-cover" />
-                        <div className="flex-1">
-                          <p className="font-semibold text-white">Premium Wireless Headphones</p>
-                          <p className="text-sm text-white/50">Qty: 1</p>
-                        </div>
-                        <p className="font-bold text-lg text-white">$299.00</p>
-                      </div>
+                  {isLoadingOrders ? (
+                    <div className="text-white/50 text-center py-12 animate-pulse">Loading your orders...</div>
+                  ) : orders.length === 0 ? (
+                    <Card className="min-h-[200px] flex flex-col items-center justify-center text-slate-500 bg-[#162028] border-white/5">
+                      <Package className="w-12 h-12 text-slate-400/50 mb-4" />
+                      <p>You haven't placed any orders yet.</p>
+                      <Button onClick={() => navigate('/shop')} variant="outline" className="mt-4">Start Shopping</Button>
                     </Card>
-                  ))}
+                  ) : (
+                    orders.map((order) => (
+                      <Card key={order.id} className="p-6 border border-white/5 bg-[#162028]">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                          <div>
+                            <p className="text-cyan-400 font-bold mb-1">Order #{order.id.substring(0, 8).toUpperCase()}</p>
+                            <p className="text-sm text-white/50">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === 'PAID' ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                            {order.status || 'PROCESSING'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 border-t border-white/10 pt-4">
+                          <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center text-white/30">
+                            <Package className="w-8 h-8" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-white">{order.items?.length || 0} Items</p>
+                            <p className="text-sm text-white/50">Total</p>
+                          </div>
+                          <p className="font-bold text-lg text-white">
+                            ${order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2) || '0.00'}
+                          </p>
+                        </div>
+                      </Card>
+                    ))
+                  )}
                 </div>
               )}
 

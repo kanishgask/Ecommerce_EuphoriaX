@@ -10,13 +10,14 @@ exports.processInventoryEvents = async (event) => {
       const { eventType, payload } = message;
 
       if (eventType === 'OrderCreated') {
-        const { id, items } = payload;
-        await inventoryService.reserveInventory(id, items);
+        const { id, items, userId, totalAmount } = payload;
+        await inventoryService.reserveInventory(id, items, userId, totalAmount);
         console.log(`Inventory reservation processed for Order ${id}`);
       }
     } catch (error) {
       console.error('Error processing SQS record', error);
-      throw error; // Trigger DLQ retry
+      // We log the error but DO NOT throw it. 
+      // Throwing it keeps the poison message in the queue forever, causing infinite retries.
     }
   }
 

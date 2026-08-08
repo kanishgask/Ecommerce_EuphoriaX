@@ -9,11 +9,15 @@ exports.processNotificationEvents = async (event) => {
       const snsMessage = JSON.parse(record.body);
       
       let message;
-      try {
-        message = JSON.parse(snsMessage.Message);
-      } catch (err) {
-        logger.error('Failed to parse snsMessage.Message. Ensure Raw Message Delivery is OFF', { error: err.message, body: snsMessage.Message });
-        continue;
+      // Handle both SNS Envelope and RawMessageDelivery
+      if (snsMessage.Message) {
+        try {
+          message = JSON.parse(snsMessage.Message);
+        } catch (e) {
+          message = snsMessage.Message; // Already an object?
+        }
+      } else {
+        message = snsMessage; // Raw delivery
       }
 
       const { eventType, payload } = message;

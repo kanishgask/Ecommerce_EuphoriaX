@@ -7,6 +7,10 @@ module.exports = {
     region: process.env.AWS_REGION || 'us-east-1',
     dynamodb: {
       paymentsTable: process.env.DYNAMODB_PAYMENTS_TABLE || 'Payments',
+    },
+    cognito: {
+      userPoolId: process.env.COGNITO_USER_POOL_ID,
+      clientId: process.env.COGNITO_CLIENT_ID
     }
   }
 };

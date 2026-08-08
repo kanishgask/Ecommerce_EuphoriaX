@@ -1,37 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Package, Clock, Truck, FileText, ArrowRight } from 'lucide-react';
+import { Check, Package, Clock, Truck, FileText, ArrowRight, XCircle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import PageTransition from '../components/shared/PageTransition';
-import { Link } from 'react-router-dom';
-
-const MOCK_ORDERS = [
-  {
-    id: 'aa500c45-3832-4c87-aa6c-14ca4920599c',
-    date: 'July 30, 2026',
-    amount: 899.00,
-    status: 'delivered',
-    trackingNumber: 'EX-LOG-54197724-US',
-    statusText: 'Order Shipped & Delivered Successfully',
-    progress: 4, // 1: Placed, 2: Processing, 3: Shipped, 4: Delivered
-  },
-  {
-    id: 'bb301c22-1144-4a22-b91c-33ba1020688a',
-    date: 'August 5, 2026',
-    amount: 145.50,
-    status: 'in-transit',
-    trackingNumber: 'EX-LOG-88221144-US',
-    statusText: 'Package currently in transit to destination',
-    progress: 3, 
-  }
-];
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { useSelector } from 'react-redux';
+import { selectUser } from '../store/slices/authSlice';
 
 const OrderTimeline = ({ progress }) => {
   const steps = [
     { label: 'Order Placed', icon: Clock },
     { label: 'Processing', icon: Package },
-    { label: 'Shipped (In Transit)', icon: Truck },
+    { label: 'Shipped', icon: Truck },
     { label: 'Delivered', icon: Check }
   ];
 
@@ -79,6 +61,36 @@ const OrderTimeline = ({ progress }) => {
 
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const user = useSelector(selectUser);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    const fetchOrders = async () => {
+      try {
+        const res = await api.get('/orders');
+        setOrders(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [user, navigate]);
+
+  const filteredOrders = orders.filter(order => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'active') return order.status !== 'DELIVERED';
+    if (activeTab === 'completed') return order.status === 'DELIVERED';
+    return true;
+  });
 
   return (
     <PageTransition>
@@ -123,70 +135,91 @@ export default function OrdersPage() {
 
           {/* Orders List */}
           <div className="space-y-6">
-            {MOCK_ORDERS.map((order, i) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Card glass={false} className="bg-[#121b22] border-white/5 overflow-hidden">
-                  
-                  {/* Order Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 p-6 border-b border-white/5 bg-white/[0.02]">
-                    <div className="flex flex-wrap gap-8">
-                      <div>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Order Number</p>
-                        <p className="text-sm font-semibold text-white font-mono">{order.id}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Date Placed</p>
-                        <p className="text-sm font-semibold text-white">{order.date}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Total Amount</p>
-                        <p className="text-lg font-bold text-cyan-400">${order.amount.toFixed(2)}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4">
-                      {order.status === 'delivered' ? (
-                        <div className="px-3 py-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-xs font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                          <Check className="w-3.5 h-3.5" /> Delivered
-                        </div>
-                      ) : (
-                        <div className="px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                          <Truck className="w-3.5 h-3.5" /> In Transit
-                        </div>
-                      )}
-                      <Button variant="secondary" size="sm" className="font-semibold px-4 h-10">
-                        Order Details <ArrowRight className="w-4 h-4 ml-1.5" />
-                      </Button>
-                    </div>
-                  </div>
+            {isLoading ? (
+              <div className="text-white/50 text-center py-12 animate-pulse">Loading your orders...</div>
+            ) : filteredOrders.length === 0 ? (
+              <Card className="min-h-[300px] flex flex-col items-center justify-center text-slate-500 bg-[#121b22] border-white/5">
+                <Package className="w-16 h-16 text-slate-400/50 mb-4" />
+                <p className="text-lg">No orders found in this category.</p>
+                <Button onClick={() => navigate('/shop')} variant="outline" className="mt-6">Explore the Shop</Button>
+              </Card>
+            ) : (
+              filteredOrders.map((order, i) => {
+                // Calculate progress based on status
+                let progress = 1;
+                let statusText = 'Order Placed & Processing';
+                if (order.status === 'PAID') { progress = 2; statusText = 'Payment Received, Preparing for Shipment'; }
+                if (order.status === 'SHIPPED') { progress = 3; statusText = 'Package currently in transit'; }
+                if (order.status === 'DELIVERED') { progress = 4; statusText = 'Order Shipped & Delivered Successfully'; }
 
-                  {/* Order Timeline */}
-                  <div className="p-6 pb-12">
-                    <OrderTimeline progress={order.progress} />
-                  </div>
+                const orderTotal = order.items?.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
+                
+                return (
+                  <motion.div
+                    key={order.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Card glass={false} className="bg-[#121b22] border-white/5 overflow-hidden">
+                      
+                      {/* Order Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 p-6 border-b border-white/5 bg-white/[0.02]">
+                        <div className="flex flex-wrap gap-8">
+                          <div>
+                            <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Order Number</p>
+                            <p className="text-sm font-semibold text-white font-mono">{order.id.substring(0, 8).toUpperCase()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Date Placed</p>
+                            <p className="text-sm font-semibold text-white">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-white/40 font-bold uppercase tracking-wider mb-1">Total Amount</p>
+                            <p className="text-lg font-bold text-cyan-400">${orderTotal.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap items-center gap-4">
+                          {order.status === 'DELIVERED' ? (
+                            <div className="px-3 py-1.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-xs font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                              <Check className="w-3.5 h-3.5" /> Delivered
+                            </div>
+                          ) : (
+                            <div className="px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                              <Truck className="w-3.5 h-3.5" /> {order.status || 'PROCESSING'}
+                            </div>
+                          )}
+                          <Button variant="secondary" size="sm" className="font-semibold px-4 h-10">
+                            Order Details <ArrowRight className="w-4 h-4 ml-1.5" />
+                          </Button>
+                        </div>
+                      </div>
 
-                  {/* Order Footer */}
-                  <div className="px-6 py-4 border-t border-white/5 bg-[#0b1114] flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-white/40" />
-                      <span className="text-white/60">Tracking Number:</span>
-                      <span className="text-white font-bold tracking-wide">{order.trackingNumber}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/60">Status:</span>
-                      <span className={order.status === 'delivered' ? 'text-green-400 font-bold' : 'text-blue-400 font-bold'}>
-                        {order.statusText}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                      {/* Order Timeline */}
+                      <div className="p-6 pb-12">
+                        <OrderTimeline progress={progress} />
+                      </div>
+
+                      {/* Order Footer */}
+                      <div className="px-6 py-4 border-t border-white/5 bg-[#0b1114] flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-white/40" />
+                          <span className="text-white/60">Items:</span>
+                          <span className="text-white font-bold tracking-wide">{order.items?.length || 0} Items Included</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white/60">Status:</span>
+                          <span className={order.status === 'DELIVERED' ? 'text-green-400 font-bold' : 'text-blue-400 font-bold'}>
+                            {statusText}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>

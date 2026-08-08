@@ -6,8 +6,7 @@ class PaymentService {
   async processPayment(paymentData) {
     const { orderId, userId, amount, paymentMethod } = paymentData;
 
-    // Simulate Payment Gateway Delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Removed artificial delay to prevent AWS Lambda 3-second timeout
 
     // Mock Business Logic: Fail if CVV is '999' for testing failure scenarios
     const isSuccess = paymentMethod.cvv !== '999';

@@ -10,7 +10,7 @@ class InventoryService {
     return await inventoryRepository.updateStock(productId, quantity);
   }
 
-  async reserveInventory(orderId, items) {
+  async reserveInventory(orderId, items, userId, totalAmount) {
     const reservedItems = [];
     
     try {
@@ -27,7 +27,12 @@ class InventoryService {
       try {
         const topicArn = process.env.SNS_INVENTORY_EVENTS_TOPIC;
         if (topicArn) {
-          await eventPublisher.publish(topicArn, 'InventoryReserved', { orderId, items });
+          await eventPublisher.publish(topicArn, 'InventoryReserved', { 
+            orderId, 
+            items, 
+            userId, 
+            totalAmount 
+          });
         }
       } catch (e) { console.error('Failed to publish InventoryReserved', e); }
 
