@@ -52,12 +52,27 @@ export default function ShopPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
+
+      // Load from cache immediately so page feels instant
+      const cached = localStorage.getItem('euphoria_products');
+      const cachedTime = localStorage.getItem('euphoria_products_time');
+      const cacheAge = cachedTime ? Date.now() - parseInt(cachedTime) : Infinity;
+      
+      if (cached && cacheAge < 5 * 60 * 1000) { // Use cache if less than 5 minutes old
+        setProducts(JSON.parse(cached));
+        setIsLoading(false);
+      }
+
+      // Always fetch fresh data in background
       try {
         const response = await api.get('/products');
-        setProducts(response.data.data || []);
+        const freshProducts = response.data.data || [];
+        setProducts(freshProducts);
+        localStorage.setItem('euphoria_products', JSON.stringify(freshProducts));
+        localStorage.setItem('euphoria_products_time', Date.now().toString());
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        toast.error('Failed to load products');
+        if (!cached) toast.error('Failed to load products');
       } finally {
         setIsLoading(false);
       }

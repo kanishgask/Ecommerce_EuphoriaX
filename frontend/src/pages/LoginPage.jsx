@@ -31,6 +31,14 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     setIsLoading(true);
+
+    // List of admin emails — add yours here
+    const ADMIN_EMAILS = [
+      'kanishgas025@gmail.com',
+      'kanishga.s.2023.cse@ritchennai.edu.in',
+      'admin@euphoria.com'
+    ];
+
     try {
       // Call the live AWS API Gateway endpoint
       const response = await api.post('/auth/login', {
@@ -42,7 +50,10 @@ export default function LoginPage() {
       dispatch(loginSuccess(tokens));
       
       toast.success('Authentication successful!');
-      navigate('/'); // Go to Home
+
+      // Redirect admins to admin panel, regular users to home
+      const isAdmin = ADMIN_EMAILS.includes(data.email.toLowerCase().trim());
+      navigate(isAdmin ? '/admin' : '/');
     } catch (error) {
       console.error("Login error:", error.response?.data || error);
       toast.error(error.response?.data?.message || 'Invalid credentials');
@@ -50,6 +61,7 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[#0b1114] flex items-center justify-center p-4 relative overflow-hidden">

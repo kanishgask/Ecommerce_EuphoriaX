@@ -1,100 +1,197 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Package, ShoppingCart, Settings, LogOut, Search, Bell } from 'lucide-react';
-import { cn } from '../utils/cn';
+import React, { useState } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  LayoutDashboard, Package, Layers, ShoppingCart, CreditCard,
+  Users, Bell, LogOut, Search, Menu, X, Store, ChevronRight
+} from 'lucide-react';
 
 const ADMIN_NAV = [
-  { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-  { name: 'Products', path: '/admin/products', icon: Package },
-  { name: 'Orders', path: '/admin/orders', icon: ShoppingCart },
-  { name: 'Customers', path: '/admin/customers', icon: Users },
-  { name: 'Settings', path: '/admin/settings', icon: Settings },
+  { name: 'Dashboard',     path: '/admin',              icon: LayoutDashboard },
+  { name: 'Products',      path: '/admin/products',     icon: Package },
+  { name: 'Inventory',     path: '/admin/inventory',    icon: Layers },
+  { name: 'Orders',        path: '/admin/orders',       icon: ShoppingCart },
+  { name: 'Payments',      path: '/admin/payments',     icon: CreditCard },
+  { name: 'Users',         path: '/admin/users',        icon: Users },
+  { name: 'Notifications', path: '/admin/notifications',icon: Bell },
 ];
 
 export default function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const currentPage = ADMIN_NAV.find(n =>
+    n.path === '/admin'
+      ? location.pathname === '/admin'
+      : location.pathname.startsWith(n.path)
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('isAuthenticated');
+    navigate('/welcome');
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex transition-colors duration-300">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0d1117', color: '#e2e8f0', fontFamily: "'Inter', sans-serif" }}>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 fixed inset-y-0 z-10">
-        <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-slate-800">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg group-hover:scale-105 transition-transform">
-              E
-            </div>
-            <span className="font-bold text-lg tracking-tight">Admin Panel</span>
-          </Link>
+      <aside style={{
+        width: sidebarOpen ? '240px' : '72px',
+        background: '#111827',
+        borderRight: '1px solid #1f2937',
+        display: 'flex', flexDirection: 'column',
+        position: 'fixed', inset: '0 auto 0 0',
+        zIndex: 50, transition: 'width 0.3s ease',
+        overflow: 'hidden'
+      }}>
+        {/* Logo */}
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 700, fontSize: 16, color: '#fff'
+          }}>E</div>
+          {sidebarOpen && <span style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', color: '#f1f5f9' }}>EuphoriaX</span>}
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-          {ADMIN_NAV.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+        {/* Toggle Button */}
+        <button onClick={() => setSidebarOpen(p => !p)} style={{
+          margin: '12px 12px 4px', padding: '8px', borderRadius: 8, border: 'none',
+          background: '#1f2937', color: '#9ca3af', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+        </button>
+
+        {/* Section Label */}
+        {sidebarOpen && <p style={{ fontSize: 10, fontWeight: 700, color: '#4b5563', letterSpacing: 2, padding: '12px 20px 4px', textTransform: 'uppercase' }}>Main Menu</p>}
+
+        {/* Nav Items */}
+        <nav style={{ flex: 1, padding: '4px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {ADMIN_NAV.map(item => {
             const Icon = item.icon;
-            
+            const isActive = item.path === '/admin'
+              ? location.pathname === '/admin'
+              : location.pathname.startsWith(item.path);
             return (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-200 relative",
-                  isActive 
-                    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                )}
-              >
-                <Icon className={cn("w-5 h-5 transition-colors", isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400")} />
-                {item.name}
+              <Link key={item.path} to={item.path} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: sidebarOpen ? '10px 12px' : '10px',
+                borderRadius: 10, textDecoration: 'none', transition: 'all 0.2s',
+                background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+                color: isActive ? '#818cf8' : '#9ca3af',
+                fontWeight: isActive ? 600 : 500, fontSize: 14,
+                justifyContent: sidebarOpen ? 'flex-start' : 'center'
+              }}>
+                <Icon size={18} style={{ flexShrink: 0, color: isActive ? '#818cf8' : '#6b7280' }} />
+                {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{item.name}</span>}
+                {sidebarOpen && isActive && <ChevronRight size={14} style={{ marginLeft: 'auto', color: '#818cf8' }} />}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-          <button className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200">
-            <LogOut className="w-5 h-5" />
-            Sign Out
+        {/* Bottom */}
+        <div style={{ padding: '12px 10px', borderTop: '1px solid #1f2937', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Link to="/" style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: sidebarOpen ? '10px 12px' : '10px',
+            borderRadius: 10, textDecoration: 'none', color: '#9ca3af',
+            fontSize: 14, fontWeight: 500, justifyContent: sidebarOpen ? 'flex-start' : 'center'
+          }}>
+            <Store size={18} style={{ flexShrink: 0, color: '#6b7280' }} />
+            {sidebarOpen && <span>View Store</span>}
+          </Link>
+          <button onClick={handleLogout} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: sidebarOpen ? '10px 12px' : '10px',
+            borderRadius: 10, border: 'none', background: 'transparent',
+            color: '#f87171', cursor: 'pointer', fontSize: 14, fontWeight: 500,
+            justifyContent: sidebarOpen ? 'flex-start' : 'center', width: '100%'
+          }}>
+            <LogOut size={18} style={{ flexShrink: 0 }} />
+            {sidebarOpen && <span>Sign Out</span>}
           </button>
         </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        {/* Top Header */}
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-8 sticky top-0 z-10">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative w-96 hidden md:block">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input 
-                type="text" 
-                placeholder="Search anything..." 
-                className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        {/* Admin Avatar */}
+        {sidebarOpen && (
+          <div style={{ padding: '12px 16px', borderTop: '1px solid #1f2937', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 700, fontSize: 13, color: '#fff'
+            }}>K</div>
+            <div>
+              <p style={{ fontWeight: 600, fontSize: 13, color: '#f1f5f9', margin: 0 }}>KANISHGA S</p>
+              <p style={{ fontSize: 11, color: '#6b7280', margin: 0 }}>Administrator</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+        )}
+      </aside>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, marginLeft: sidebarOpen ? '240px' : '72px', transition: 'margin-left 0.3s ease', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Top Header */}
+        <header style={{
+          height: 60, background: '#111827', borderBottom: '1px solid #1f2937',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 24px', position: 'sticky', top: 0, zIndex: 40
+        }}>
+          {/* Breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#6b7280' }}>
+            <span>Admin</span>
+            <ChevronRight size={14} />
+            <span style={{ color: '#f1f5f9', fontWeight: 600 }}>{currentPage?.name || 'Dashboard'}</span>
+          </div>
+
+          {/* Search */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: 380, margin: '0 24px' }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }} />
+            <input placeholder="Search anything..." style={{
+              width: '100%', background: '#1f2937', border: '1px solid #374151',
+              borderRadius: 10, padding: '8px 12px 8px 36px', color: '#e2e8f0',
+              fontSize: 13, outline: 'none', boxSizing: 'border-box'
+            }} />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Link to="/" style={{
+              padding: '7px 14px', borderRadius: 8, border: '1px solid #374151',
+              color: '#e2e8f0', textDecoration: 'none', fontSize: 13, fontWeight: 500,
+              background: 'transparent'
+            }}>View Store</Link>
+            <button style={{
+              position: 'relative', background: 'transparent', border: 'none', cursor: 'pointer', color: '#9ca3af'
+            }}>
+              <Bell size={18} />
+              <span style={{
+                position: 'absolute', top: -2, right: -2, width: 8, height: 8,
+                background: '#ef4444', borderRadius: '50%'
+              }} />
             </button>
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-              AD
-            </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Outlet />
-          </motion.div>
+        <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

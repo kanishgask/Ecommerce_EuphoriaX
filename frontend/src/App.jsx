@@ -32,42 +32,54 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Lazy load admin pages
+const AdminProducts      = React.lazy(() => import('./pages/admin/AdminProducts'));
+const AdminInventory     = React.lazy(() => import('./pages/admin/AdminInventory'));
+const AdminOrders        = React.lazy(() => import('./pages/admin/AdminOrders'));
+const AdminPayments      = React.lazy(() => import('./pages/admin/AdminPayments'));
+const AdminUsers         = React.lazy(() => import('./pages/admin/AdminUsers'));
+const AdminNotifications = React.lazy(() => import('./pages/admin/AdminNotifications'));
+
+const Loader = () => <div style={{color:'#9ca3af',padding:40,textAlign:'center'}}>Loading...</div>;
+
 function App() {
   return (
     <ErrorBoundary>
       <Routes>
         {/* Auth & Landing Routes (No Navbar) */}
-      <Route path="/welcome" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/verify" element={<VerifyEmailPage />} />
-      <Route path="/mock-bank" element={<DemoBankPage />} />
+        <Route path="/welcome" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify" element={<VerifyEmailPage />} />
+        <Route path="/mock-bank" element={<DemoBankPage />} />
 
-      {/* Main Application Routes */}
-      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route index element={<HomePage />} />
-        <Route path="shop" element={<ShopPage />} />
-        <Route path="product/:id" element={<ProductPage />} />
-        <Route path="cart" element={<CartPage />} />
-        <Route path="checkout" element={<CheckoutPage />} />
-        <Route path="contact" element={<ContactPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="wishlist" element={<WishlistPage />} />
-        <Route path="categories" element={<CategoriesPage />} />
-        <Route path="about" element={<AboutPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
+        {/* Main Application Routes */}
+        <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          <Route index element={<HomePage />} />
+          <Route path="shop" element={<ShopPage />} />
+          <Route path="product/:id" element={<ProductPage />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="contact" element={<ContactPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="wishlist" element={<WishlistPage />} />
+          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboard />} />
-        {/* Placeholders for other admin pages */}
-        <Route path="products" element={<div className="p-8">Products Management</div>} />
-        <Route path="orders" element={<div className="p-8">Orders Management</div>} />
-        <Route path="customers" element={<div className="p-8">Customers Management</div>} />
-      </Route>
-    </Routes>
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<React.Suspense fallback={<Loader />}><AdminProducts /></React.Suspense>} />
+          <Route path="inventory" element={<React.Suspense fallback={<Loader />}><AdminInventory /></React.Suspense>} />
+          <Route path="orders" element={<React.Suspense fallback={<Loader />}><AdminOrders /></React.Suspense>} />
+          <Route path="payments" element={<React.Suspense fallback={<Loader />}><AdminPayments /></React.Suspense>} />
+          <Route path="users" element={<React.Suspense fallback={<Loader />}><AdminUsers /></React.Suspense>} />
+          <Route path="notifications" element={<React.Suspense fallback={<Loader />}><AdminNotifications /></React.Suspense>} />
+        </Route>
+      </Routes>
     </ErrorBoundary>
   );
 }
