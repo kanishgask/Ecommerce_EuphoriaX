@@ -32,8 +32,8 @@ exports.processNotificationEvents = async (event) => {
         );
       }
     } catch (error) {
-      logger.error('Error processing SQS record', error);
-      throw error; 
+      // Log but do NOT throw — throwing causes SQS to retry this message forever
+      logger.error('Error processing SQS record. Message will be deleted from queue.', error);
     }
   }
 

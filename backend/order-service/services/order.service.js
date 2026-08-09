@@ -66,6 +66,10 @@ class OrderService {
 
     return await orderRepository.updateOrderStatus(orderId, status);
   }
+
+  async getAllOrders() {
+    return await orderRepository.getAllOrders();
+  }
 }
 
 module.exports = new OrderService();

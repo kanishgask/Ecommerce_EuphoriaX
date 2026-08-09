@@ -15,7 +15,7 @@ export default function AdminPayments() {
       try {
         res = await api.get('/payments/all');
       } catch(e) {
-        res = await api.get('/payments');
+        res = await api.get('/payments/history');
       }
       const data = Array.isArray(res.data?.data) ? res.data.data :
                    Array.isArray(res.data) ? res.data : 

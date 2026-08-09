@@ -1,0 +1,84 @@
+name: Reusable Backend CI
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: "The name of the service"
+      service_path:
+        required: true
+        type: string
+        description: "The path to the service directory"
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '${{ inputs.service_path }}/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ${{ inputs.service_path }}
+        run: npm ci
+
+      - name: Run Snyk to check for vulnerabilities
+        working-directory: ${{ inputs.service_path }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          npx snyk test --severity-threshold=critical
+          npx snyk monitor
+
+      - name: Run Linter
+        working-directory: ${{ inputs.service_path }}
+        run: npm run lint --if-present
+
+      - name: Run Jest Unit Tests
+        working-directory: ${{ inputs.service_path }}
+        run: npm test -- --coverage
+
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/coverage/
+          retention-days: 7
+          
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ${{ inputs.service_path }}
+          args: >
+            -Dsonar.projectKey=euphoriax-${{ inputs.service_name }}
+            -Dsonar.organization=kanishgask
+            -Dsonar.sources=.
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.exclusions=node_modules/**,coverage/**,**/*.test.js
+
+      - name: Prune Dev Dependencies
+        working-directory: ${{ inputs.service_path }}
+        run: npm prune --production
+        
+      - name: Zip Application
+        working-directory: ${{ inputs.service_path }}
+        run: zip -r function.zip . -x "*.git*" -x "*tests*" -x "coverage/*"
+        
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ inputs.service_name }}
+          path: ${{ inputs.service_path }}/function.zip
+          retention-days: 1

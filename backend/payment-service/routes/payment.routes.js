@@ -67,5 +67,6 @@ router.get('/order/:orderId', paymentController.getPaymentHistoryByOrderId);
  *         description: User payment history
  */
 router.get('/history', paymentController.getPaymentHistoryByUser);
+router.get('/all', paymentController.getAllPayments);
 
 module.exports = router;

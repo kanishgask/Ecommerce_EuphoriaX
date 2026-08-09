@@ -1,0 +1,26 @@
+name: CI - Email Consumer (Notification Service)
+
+on:
+  push:
+    paths:
+      - 'backend/notification-service/**'
+      - '.github/workflows/email-consumer.yml'
+      - '.github/workflows/deploy-email-consumer.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: notification-service
+      service_path: backend/notification-service
+    secrets: inherit
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-email-consumer.yml
+    secrets: inherit

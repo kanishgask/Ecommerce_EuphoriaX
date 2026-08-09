@@ -43,6 +43,10 @@ class PaymentService {
   async getPaymentHistoryByUser(userId) {
     return await paymentRepository.getPaymentsByUser(userId);
   }
+
+  async getAllPayments() {
+    return await paymentRepository.getAllPayments();
+  }
 }
 
 module.exports = new PaymentService();

@@ -11,7 +11,12 @@ export default function AdminUsers() {
     setLoading(true);
     setApiFailed(false);
     try {
-      const res = await api.get('/users');
+      let res;
+      try {
+        res = await api.get('/auth/users');
+      } catch (e) {
+        res = await api.get('/users');
+      }
       const data = Array.isArray(res.data?.data) ? res.data.data :
                    Array.isArray(res.data) ? res.data : 
                    (res.data?.data?.users || res.data?.users || []);

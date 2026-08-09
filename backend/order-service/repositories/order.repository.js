@@ -1,4 +1,4 @@
-const { PutCommand, GetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, UpdateCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { ddbDocClient } = require('../config/aws');
 const config = require('../config/config');
 
@@ -57,6 +57,19 @@ class OrderRepository {
       // Fallback if index is not created yet (for dev without TF applied fully)
       console.warn("Index query failed, falling back to empty array for now: ", e.message);
       return []; 
+    }
+  }
+
+  async getAllOrders() {
+    const params = {
+      TableName: config.aws.dynamodb.ordersTable
+    };
+    try {
+      const { Items } = await ddbDocClient.send(new ScanCommand(params));
+      return Items || [];
+    } catch (e) {
+      console.error("Error scanning orders:", e);
+      return [];
     }
   }
 }

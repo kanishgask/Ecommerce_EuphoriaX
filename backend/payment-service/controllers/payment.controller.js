@@ -37,6 +37,15 @@ class PaymentController {
       next(error);
     }
   }
+
+  async getAllPayments(req, res, next) {
+    try {
+      const payments = await paymentService.getAllPayments();
+      res.status(200).json({ success: true, data: payments });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new PaymentController();

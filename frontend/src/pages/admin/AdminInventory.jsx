@@ -63,7 +63,7 @@ export default function AdminInventory() {
 
   const handleSave = async () => {
     try {
-      await api.put(`/inventory/${editingItem.productId}`, { availableStock: Number(newStock) });
+      await api.put(`/inventory/${editingItem.productId}`, { quantity: Number(newStock) });
       window.alert('Stock updated successfully');
       setIsModalOpen(false);
       fetchInventory();

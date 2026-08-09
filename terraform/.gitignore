@@ -1,0 +1,12 @@
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Secrets — never commit these
+terraform.tfvars.local
+*.auto.tfvars
+
+# Placeholder ZIP generated at plan time
+placeholder.zip

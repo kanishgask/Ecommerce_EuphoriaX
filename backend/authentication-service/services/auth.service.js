@@ -49,6 +49,10 @@ class AuthService {
     }
     return user;
   }
+
+  async getAllUsers() {
+    return await userRepository.getAllUsers();
+  }
 }
 
 module.exports = new AuthService();

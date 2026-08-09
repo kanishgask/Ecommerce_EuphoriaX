@@ -62,6 +62,18 @@ router.post('/', orderController.createOrder);
 
 /**
  * @swagger
+ * /orders/all:
+ *   get:
+ *     summary: Get all orders (Admin)
+ *     tags: [Orders]
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+router.get('/all', orderController.getAllOrders);
+
+/**
+ * @swagger
  * /orders:
  *   get:
  *     summary: Get user's orders

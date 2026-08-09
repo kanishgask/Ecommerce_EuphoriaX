@@ -1,0 +1,52 @@
+name: Full Infrastructure & Application Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # 1. Continuous Integration (Test & Build ZIPs)
+  ci-backend:
+    strategy:
+      matrix:
+        service:
+          - authentication-service
+          - product-service
+          - cart-service
+          - inventory-service
+          - order-service
+          - payment-service
+          - notification-service
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: ${{ matrix.service }}
+      service_path: backend/${{ matrix.service }}
+    secrets: inherit
+
+
+
+  # 3. Continuous Deployment (Update Lambda Code)
+  deploy-backend:
+    needs: ci-backend
+    strategy:
+      matrix:
+        service:
+          - authentication-service
+          - product-service
+          - cart-service
+          - inventory-service
+          - order-service
+          - payment-service
+          - notification-service
+    uses: ./.github/workflows/reusable-backend-deploy.yml
+    with:
+      service_name: ${{ matrix.service }}
+      service_path: backend/${{ matrix.service }}
+    secrets: inherit
+
+  # 4. Frontend Deployment
+  deploy-frontend:
+    needs: deploy-backend
+    uses: ./.github/workflows/deploy-frontend.yml
+    secrets: inherit

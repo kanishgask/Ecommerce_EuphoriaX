@@ -45,6 +45,15 @@ class OrderController {
       next(error);
     }
   }
+
+  async getAllOrders(req, res, next) {
+    try {
+      const orders = await orderService.getAllOrders();
+      res.status(200).json({ success: true, data: orders });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new OrderController();

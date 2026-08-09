@@ -1,0 +1,13 @@
+name: Deploy - Email Consumer (Notification Service)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/reusable-backend-deploy.yml
+    with:
+      service_name: notification-service
+      service_path: backend/notification-service
+    secrets: inherit

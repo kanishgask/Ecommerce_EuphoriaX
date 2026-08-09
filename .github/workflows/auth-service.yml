@@ -1,0 +1,26 @@
+name: CI - Auth Service
+
+on:
+  push:
+    paths:
+      - 'backend/authentication-service/**'
+      - '.github/workflows/auth-service.yml'
+      - '.github/workflows/deploy-auth.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: authentication-service
+      service_path: backend/authentication-service
+    secrets: inherit
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-auth.yml
+    secrets: inherit

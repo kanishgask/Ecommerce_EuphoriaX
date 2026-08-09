@@ -1,4 +1,4 @@
-const { PutCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { ddbDocClient } = require('../config/aws');
 const config = require('../config/config');
 
@@ -44,6 +44,19 @@ class PaymentRepository {
       return Items || [];
     } catch (e) {
       console.warn("Index query failed for UserIdIndex: ", e.message);
+      return [];
+    }
+  }
+
+  async getAllPayments() {
+    const params = {
+      TableName: config.aws.dynamodb.paymentsTable
+    };
+    try {
+      const { Items } = await ddbDocClient.send(new ScanCommand(params));
+      return Items || [];
+    } catch (e) {
+      console.error("Error scanning payments:", e);
       return [];
     }
   }

@@ -1,0 +1,26 @@
+name: CI - Inventory Service
+
+on:
+  push:
+    paths:
+      - 'backend/inventory-service/**'
+      - '.github/workflows/inventory-service.yml'
+      - '.github/workflows/deploy-inventory.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: inventory-service
+      service_path: backend/inventory-service
+    secrets: inherit
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-inventory.yml
+    secrets: inherit

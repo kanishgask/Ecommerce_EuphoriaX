@@ -1,0 +1,26 @@
+name: CI - Cart Service
+
+on:
+  push:
+    paths:
+      - 'backend/cart-service/**'
+      - '.github/workflows/cart-service.yml'
+      - '.github/workflows/deploy-cart.yml'
+    branches:
+      - ci-cd
+      - main
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-backend-ci.yml
+    with:
+      service_name: cart-service
+      service_path: backend/cart-service
+    secrets: inherit
+
+  trigger_cd:
+    needs: ci
+    if: github.ref == 'refs/heads/ci-cd' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy-cart.yml
+    secrets: inherit

@@ -3,10 +3,12 @@ import { cn } from '../../utils/cn';
 
 const Input = React.forwardRef(
   ({ className, type = "text", error, label, icon: Icon, ...props }, ref) => {
+    const inputId = props.id || props.name || (typeof label === 'string' ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+    
     return (
       <div className="w-full flex flex-col gap-1.5">
         {label && (
-          <label className="text-sm font-semibold text-white/80">
+          <label htmlFor={inputId} className="text-sm font-semibold text-white/80">
             {label}
           </label>
         )}
@@ -17,6 +19,7 @@ const Input = React.forwardRef(
             </div>
           )}
           <input
+            id={inputId}
             type={type}
             className={cn(
               "flex h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all duration-300 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:bg-white/10",

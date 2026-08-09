@@ -1,0 +1,70 @@
+name: Deploy - Frontend
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-frontend
+      cancel-in-progress: false
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-frontend
+          path: dist
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION || 'ap-southeast-1' }}
+          
+      - name: Upload dist to S3 Bucket with Retries
+        run: |
+          n=0
+          max_retries=3
+          until [ "$n" -ge "$max_retries" ]
+          do
+             aws s3 sync dist/ s3://euphoriaxbucket --delete && break
+             n=$((n+1))
+             echo "S3 sync failed. Retrying in 10s ($n/$max_retries)..."
+             sleep 10
+          done
+          
+          if [ "$n" -ge "$max_retries" ]; then
+            echo "Failed to sync to S3 after $max_retries attempts."
+            exit 1
+          fi
+          
+      - name: Invalidate CloudFront Distribution with Retries
+        run: |
+          DIST_ID=${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+
+          if [ -n "$DIST_ID" ] && [ "$DIST_ID" != "None" ]; then
+            n=0
+            max_retries=3
+            until [ "$n" -ge "$max_retries" ]
+            do
+               aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*" && break
+               n=$((n+1))
+               echo "CloudFront invalidation failed. Retrying in 10s ($n/$max_retries)..."
+               sleep 10
+            done
+            if [ "$n" -ge "$max_retries" ]; then
+               echo "Failed to invalidate CloudFront after $max_retries attempts."
+               exit 1
+            fi
+          else
+            echo "CLOUDFRONT_DISTRIBUTION_ID secret is not set. Skipping CloudFront invalidation."
+            exit 1
+          fi
+
+      - name: Print Deployment Summary
+        run: echo "Frontend Deployment to S3 and CloudFront completed successfully!"

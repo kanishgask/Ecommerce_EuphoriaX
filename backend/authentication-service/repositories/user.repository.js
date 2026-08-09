@@ -1,4 +1,4 @@
-const { PutCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 const { ddbDocClient } = require('../config/aws');
 const config = require('../config/config');
 
@@ -27,6 +27,19 @@ class UserRepository {
     };
     const { Item } = await ddbDocClient.send(new GetCommand(params));
     return Item;
+  }
+
+  async getAllUsers() {
+    const params = {
+      TableName: config.aws.dynamodb.usersTable
+    };
+    try {
+      const { Items } = await ddbDocClient.send(new ScanCommand(params));
+      return Items || [];
+    } catch (e) {
+      console.error("Error scanning users:", e);
+      return [];
+    }
   }
 }
 
