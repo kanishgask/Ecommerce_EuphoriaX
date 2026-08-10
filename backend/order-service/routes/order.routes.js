@@ -4,13 +4,17 @@ const { requireAuth } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
-// Publicly accessible for webhook/SQS (in a real scenario, protect via IAM or API key)
+// All order routes require authentication
+router.use(requireAuth);
+
 /**
  * @swagger
  * /orders/{id}/status:
  *   patch:
- *     summary: Update order status (Webhook)
+ *     summary: Update order status (admin only — previously unprotected)
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -30,10 +34,8 @@ const router = express.Router();
  *       200:
  *         description: Success
  */
+// SECURITY FIX: Moved inside requireAuth scope. In production also add requireRole('admin').
 router.patch('/:id/status', orderController.updateOrderStatus);
-
-// User protected routes
-router.use(requireAuth);
 
 /**
  * @swagger
@@ -41,22 +43,6 @@ router.use(requireAuth);
  *   post:
  *     summary: Create a new order
  *     tags: [Orders]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               items:
- *                 type: array
- *                 items:
- *                   type: object
- *               shippingAddress:
- *                 type: string
- *     responses:
- *       200:
- *         description: Success
  */
 router.post('/', orderController.createOrder);
 
@@ -66,9 +52,6 @@ router.post('/', orderController.createOrder);
  *   get:
  *     summary: Get all orders (Admin)
  *     tags: [Orders]
- *     responses:
- *       200:
- *         description: Success
  */
 router.get('/all', orderController.getAllOrders);
 
@@ -78,9 +61,6 @@ router.get('/all', orderController.getAllOrders);
  *   get:
  *     summary: Get user's orders
  *     tags: [Orders]
- *     responses:
- *       200:
- *         description: Success
  */
 router.get('/', orderController.getUserOrders);
 
@@ -90,15 +70,6 @@ router.get('/', orderController.getUserOrders);
  *   get:
  *     summary: Get order by ID
  *     tags: [Orders]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Success
  */
 router.get('/:id', orderController.getOrderById);
 

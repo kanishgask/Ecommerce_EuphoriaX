@@ -11,7 +11,8 @@ describe('PaymentController', () => {
   beforeEach(() => {
     req = {
       body: {},
-      user: { sub: 'user-123' },
+      // Simulate a regular authenticated user (no admin group)
+      user: { sub: 'user-123', 'cognito:groups': [] },
       params: {}
     };
     res = {
@@ -23,23 +24,16 @@ describe('PaymentController', () => {
   });
 
   describe('processPayment', () => {
-    it('should return 403 if userId does not match', async () => {
-      processPaymentSchema.validateAsync.mockResolvedValue({ userId: 'other-user' });
-
-      await paymentController.processPayment(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Unauthorized userId mismatch' });
-    });
-
-    it('should process payment and return 200 on success', async () => {
-      const mockValue = { userId: 'user-123', amount: 100 };
+    it('should process payment using userId from JWT token (not from body)', async () => {
+      // userId is NOT in the validated value — controller injects it from req.user.sub
+      const mockValue = { orderId: 'order-1', amount: 100 };
       processPaymentSchema.validateAsync.mockResolvedValue(mockValue);
       paymentService.processPayment.mockResolvedValue({ id: 'payment-1' });
 
       await paymentController.processPayment(req, res, next);
 
-      expect(paymentService.processPayment).toHaveBeenCalledWith(mockValue);
+      // Service must be called with userId from JWT token, not from body
+      expect(paymentService.processPayment).toHaveBeenCalledWith({ ...mockValue, userId: 'user-123' });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ success: true, data: { id: 'payment-1' } });
     });
@@ -55,15 +49,40 @@ describe('PaymentController', () => {
   });
 
   describe('getPaymentHistoryByOrderId', () => {
-    it('should return payment history for an order', async () => {
+    it('should return payment history that belongs to the authenticated user', async () => {
       req.params.orderId = 'order-1';
-      paymentService.getPaymentHistoryByOrderId.mockResolvedValue([{ id: 'p1' }]);
+      // Service returns payments — one belongs to current user
+      paymentService.getPaymentHistoryByOrderId.mockResolvedValue([{ id: 'p1', userId: 'user-123' }]);
 
       await paymentController.getPaymentHistoryByOrderId(req, res, next);
 
       expect(paymentService.getPaymentHistoryByOrderId).toHaveBeenCalledWith('order-1');
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ success: true, data: [{ id: 'p1' }] });
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: [{ id: 'p1', userId: 'user-123' }] });
+    });
+
+    it('should return 403 if no payments belong to the current user', async () => {
+      req.params.orderId = 'order-2';
+      // Payment belongs to a different user
+      paymentService.getPaymentHistoryByOrderId.mockResolvedValue([{ id: 'p2', userId: 'other-user' }]);
+
+      await paymentController.getPaymentHistoryByOrderId(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Forbidden: you do not own this resource' });
+    });
+
+    it('should return all payments for admin users', async () => {
+      req.user = { sub: 'admin-1', 'cognito:groups': ['admin'] };
+      req.params.orderId = 'order-3';
+      const allPayments = [{ id: 'p3', userId: 'other-user' }, { id: 'p4', userId: 'admin-1' }];
+      paymentService.getPaymentHistoryByOrderId.mockResolvedValue(allPayments);
+
+      await paymentController.getPaymentHistoryByOrderId(req, res, next);
+
+      // Admin sees all payments without filtering
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: allPayments });
     });
 
     it('should call next on error', async () => {
@@ -77,7 +96,7 @@ describe('PaymentController', () => {
   });
 
   describe('getPaymentHistoryByUser', () => {
-    it('should return payment history for a user', async () => {
+    it('should return payment history using userId from JWT (not body)', async () => {
       paymentService.getPaymentHistoryByUser.mockResolvedValue([{ id: 'p2' }]);
 
       await paymentController.getPaymentHistoryByUser(req, res, next);
@@ -98,7 +117,16 @@ describe('PaymentController', () => {
   });
 
   describe('getAllPayments', () => {
-    it('should return all payments', async () => {
+    it('should return 403 for non-admin users', async () => {
+      // req.user has no admin group (set in beforeEach)
+      await paymentController.getAllPayments(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Forbidden: admin access required' });
+    });
+
+    it('should return all payments for admin users', async () => {
+      req.user = { sub: 'admin-1', 'cognito:groups': ['admin'] };
       paymentService.getAllPayments.mockResolvedValue([{ id: 'p3' }]);
 
       await paymentController.getAllPayments(req, res, next);
@@ -108,7 +136,8 @@ describe('PaymentController', () => {
       expect(res.json).toHaveBeenCalledWith({ success: true, data: [{ id: 'p3' }] });
     });
 
-    it('should call next on error', async () => {
+    it('should call next on error for admin when service throws', async () => {
+      req.user = { sub: 'admin-1', 'cognito:groups': ['admin'] };
       const error = new Error('Error');
       paymentService.getAllPayments.mockRejectedValue(error);
 

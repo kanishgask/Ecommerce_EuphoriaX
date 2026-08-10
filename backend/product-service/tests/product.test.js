@@ -7,9 +7,19 @@ jest.mock('aws-xray-sdk-core', () => ({
   captureAWSv3Client: (client) => client,
 }));
 
+// Mock auth middleware — avoids loading jwks-rsa ESM in Jest environment
+jest.mock('../middlewares/auth.middleware', () => ({
+  requireAuth: (req, res, next) => {
+    req.user = { sub: 'test-user-123', 'cognito:groups': ['admin'] };
+    next();
+  },
+  requireRole: (...roles) => (req, res, next) => next(),
+}));
+
 const { ddbDocClient } = require('../config/aws');
 const request = require('supertest');
 const app = require('../app');
+
 
 const MOCK_PRODUCT = {
   id: 'prod-123',

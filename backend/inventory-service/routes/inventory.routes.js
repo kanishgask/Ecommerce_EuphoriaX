@@ -1,5 +1,6 @@
 const express = require('express');
 const inventoryController = require('../controllers/inventory.controller');
+const { requireAuth, requireRole } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ const router = express.Router();
  * @swagger
  * /{productId}:
  *   get:
- *     summary: Get inventory availability for a product
+ *     summary: Get inventory availability for a product (public read)
  *     tags: [Inventory]
  *     parameters:
  *       - in: path
@@ -22,14 +23,17 @@ const router = express.Router();
  *       404:
  *         description: Product not found
  */
-router.get('/:productId', inventoryController.getAvailability);
+// READ — any authenticated user can check availability
+router.get('/:productId', requireAuth, inventoryController.getAvailability);
 
 /**
  * @swagger
  * /{productId}:
  *   put:
- *     summary: Update stock for a product manually
+ *     summary: Update stock for a product (admin/inventory_manager only)
  *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
@@ -50,57 +54,29 @@ router.get('/:productId', inventoryController.getAvailability);
  *       200:
  *         description: Stock updated
  */
-router.put('/:productId', inventoryController.updateStock);
+// WRITE — only admin or inventory_manager role can mutate stock
+router.put('/:productId', requireAuth, requireRole('admin', 'inventory_manager'), inventoryController.updateStock);
 
 /**
  * @swagger
  * /reserve:
  *   post:
- *     summary: Reserve inventory for an order (Simulated direct call)
+ *     summary: Reserve inventory for an order (admin/inventory_manager only)
  *     tags: [Inventory]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               orderId:
- *                 type: string
- *               items:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     productId:
- *                       type: string
- *                     quantity:
- *                       type: integer
- *     responses:
- *       200:
- *         description: Inventory reserved
+ *     security:
+ *       - bearerAuth: []
  */
-router.post('/reserve', inventoryController.reserveInventory);
+router.post('/reserve', requireAuth, requireRole('admin', 'inventory_manager'), inventoryController.reserveInventory);
 
 /**
  * @swagger
  * /release:
  *   post:
- *     summary: Release reserved inventory for a cancelled order
+ *     summary: Release reserved inventory for a cancelled order (admin/inventory_manager only)
  *     tags: [Inventory]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               orderId:
- *                 type: string
- *     responses:
- *       200:
- *         description: Inventory released
+ *     security:
+ *       - bearerAuth: []
  */
-router.post('/release', inventoryController.releaseInventory);
+router.post('/release', requireAuth, requireRole('admin', 'inventory_manager'), inventoryController.releaseInventory);
 
 module.exports = router;

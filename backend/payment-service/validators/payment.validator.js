@@ -2,7 +2,8 @@ const Joi = require('joi');
 
 const processPaymentSchema = Joi.object({
   orderId: Joi.string().required(),
-  userId: Joi.string().required(),
+  // userId is intentionally NOT accepted from the request body.
+  // It is always derived from the verified JWT token (req.user.sub) in the controller.
   amount: Joi.number().positive().required(),
   paymentMethod: Joi.object({
     cardNumber: Joi.string().length(16).required(),

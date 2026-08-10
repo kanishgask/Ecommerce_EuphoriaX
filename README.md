@@ -10,7 +10,16 @@
   [![Node.js](https://img.shields.io/badge/Node.js-43853D?logo=node.js&logoColor=white)](https://nodejs.org/)
   [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
   [![SonarCloud](https://img.shields.io/badge/SonarCloud-4E9BCD?logo=sonarcloud&logoColor=white)](https://sonarcloud.io/)
+  [![Snyk](https://img.shields.io/badge/Snyk-4C4A73?logo=snyk&logoColor=white)](https://snyk.io/)
   [![Jest](https://img.shields.io/badge/Jest-C21325?logo=jest&logoColor=white)](https://jestjs.io/)
+</div>
+
+<div align="center">
+  <h3>
+    <a href="https://d3mjp5edb9pajn.cloudfront.net/">
+      🔴 View Live Demo
+    </a>
+  </h3>
 </div>
 
 <br/>
@@ -98,11 +107,20 @@ The `terraform_prod/` directory contains the complete IaC definition for the AWS
 * **AWS Lambda**: 7 functions with least-privilege IAM execution roles (each service can only access its own specific database table).
 * **Amazon SNS/SQS**: The event-driven messaging backbone including Dead Letter Queues (DLQs) for failed events.
 * **CloudFront & S3**: Secure static hosting with Origin Access Control (OAC).
-* **CloudWatch**: Centralized logging, dashboards, and automated alarms for Lambda errors.
 
 ---
 
-## 🛡️ 4. DevSecOps & Automated CI/CD
+## 📊 4. Observability & Monitoring (CloudWatch)
+
+This project heavily utilizes **Amazon CloudWatch** to provide complete visibility into the serverless architecture:
+
+* **Centralized Dashboard**: Terraform automatically provisions a custom dashboard (`euphoriax-overview`) containing rich widgets that track Lambda Invocations, P99 Durations, API Gateway 4xx/5xx errors, and real-time SQS Queue depths.
+* **Automated Alarms**: Pre-configured metric alarms instantly trigger if any Lambda function experiences >5 errors within 5 minutes, or if any Dead Letter Queue (DLQ) receives a failed event message.
+* **Log Aggregation**: Every microservice and API Gateway route automatically streams execution logs to isolated CloudWatch Log Groups with a strict 14-day retention policy to optimize costs.
+
+---
+
+## 🛡️ 5. DevSecOps & Automated CI/CD
 
 The project includes an incredibly robust, 100% automated pipeline built on **GitHub Actions**.
 
@@ -110,8 +128,9 @@ The project includes an incredibly robust, 100% automated pipeline built on **Gi
 Every push triggers the `reusable-backend-ci.yml` pipeline for the modified services.
 1. **Dependency Installation**: Caches and installs NPM packages.
 2. **Testing**: Runs the `Jest` test suite (the backend currently maintains over 100+ passing unit and integration tests).
-3. **Code Quality**: Pushes `lcov` coverage reports to SonarCloud.
-4. **Build**: Zips the production-ready code as an artifact.
+3. **Security (Snyk)**: Performs automated DevSecOps vulnerability scanning on all open-source dependencies using Snyk to block critical CVEs from reaching production.
+4. **Code Quality**: Pushes `lcov` coverage reports and static code analysis to SonarCloud.
+5. **Build**: Zips the production-ready code as an artifact.
 
 ### Continuous Deployment (CD)
 If the CI pipeline passes on the `main` branch, the deployment pipeline takes over:
@@ -120,7 +139,7 @@ If the CI pipeline passes on the `main` branch, the deployment pipeline takes ov
 
 ---
 
-## 🛠️ 5. Core Technology Stack
+## 🛠️ 6. Core Technology Stack
 
 | Category | Technology | Purpose |
 | :--- | :--- | :--- |
@@ -131,11 +150,12 @@ If the CI pipeline passes on the `main` branch, the deployment pipeline takes ov
 | **Security** | AWS Cognito | Identity and Access Management |
 | **Infrastructure**| HashiCorp Terraform | Automating all AWS resource provisioning |
 | **CI/CD** | GitHub Actions | 100% automated testing & deployment pipelines |
+| **Code Quality** | Snyk, SonarCloud | Automated DevSecOps vulnerability & quality blocking |
 | **Testing** | Jest, Supertest, Vitest | Backend & Frontend test frameworks |
 
 ---
 
-## 💻 6. How to Deploy & Run
+## 💻 7. How to Deploy & Run
 
 ### Step 1: Clone the Repository
 ```bash
@@ -171,7 +191,7 @@ Visit `http://localhost:5173` in your browser.
 
 ---
 
-## 👨‍💻 7. Author & License
+## 👨‍💻 8. Author & License
 
 **Kanishga S**
 * **GitHub:** [@kanishgask](https://github.com/kanishgask)

@@ -1,5 +1,6 @@
 const express = require('express');
 const productController = require('../controllers/product.controller');
+const { requireAuth, requireRole } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -7,65 +8,30 @@ const router = express.Router();
  * @swagger
  * /products:
  *   post:
- *     summary: Create a new product
+ *     summary: Create a new product (admin only)
  *     tags: [Products]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               price:
- *                 type: number
- *     responses:
- *       201:
- *         description: Created
+ *     security:
+ *       - bearerAuth: []
  */
-router.post('/', productController.createProduct);
+// WRITE operations — require authentication + admin role
+router.post('/', requireAuth, requireRole('admin'), productController.createProduct);
 
 /**
  * @swagger
  * /products:
  *   get:
- *     summary: Get all products with pagination and filters
+ *     summary: Get all products with pagination and filters (public)
  *     tags: [Products]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *         description: Number of items to return
- *       - in: query
- *         name: lastEvaluatedKey
- *         schema:
- *           type: string
- *         description: Base64 encoded key for pagination
- *     responses:
- *       200:
- *         description: Success
  */
+// READ operations — public (anyone can browse the catalogue)
 router.get('/', productController.searchProducts);
 
 /**
  * @swagger
  * /products/{id}:
  *   get:
- *     summary: Get product by ID
+ *     summary: Get product by ID (public)
  *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Success
- *       404:
- *         description: Not Found
  */
 router.get('/:id', productController.getProductById);
 
@@ -73,36 +39,22 @@ router.get('/:id', productController.getProductById);
  * @swagger
  * /products/{id}:
  *   put:
- *     summary: Update a product
+ *     summary: Update a product (admin only)
  *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Success
+ *     security:
+ *       - bearerAuth: []
  */
-router.put('/:id', productController.updateProduct);
+router.put('/:id', requireAuth, requireRole('admin'), productController.updateProduct);
 
 /**
  * @swagger
  * /products/{id}:
  *   delete:
- *     summary: Delete a product
+ *     summary: Delete a product (admin only)
  *     tags: [Products]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Success
+ *     security:
+ *       - bearerAuth: []
  */
-router.delete('/:id', productController.deleteProduct);
+router.delete('/:id', requireAuth, requireRole('admin'), productController.deleteProduct);
 
 module.exports = router;
