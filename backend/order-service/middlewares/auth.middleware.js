@@ -35,4 +35,23 @@ const requireAuth = (req, res, next) => {
   });
 };
 
-module.exports = { requireAuth };
+/**
+ * requireRole — checks that req.user belongs to at least one of the allowed Cognito groups.
+ * Must be used AFTER requireAuth.
+ * @param {...string} roles — e.g. requireRole('admin')
+ */
+const requireRole = (...roles) => (req, res, next) => {
+  const userGroups = req.user?.['cognito:groups'] || [];
+  const hasRole = roles.some(role => userGroups.includes(role));
+
+  if (!hasRole) {
+    return res.status(403).json({
+      success: false,
+      message: `Forbidden: requires one of these roles [${roles.join(', ')}]`
+    });
+  }
+  next();
+};
+
+module.exports = { requireAuth, requireRole };
+

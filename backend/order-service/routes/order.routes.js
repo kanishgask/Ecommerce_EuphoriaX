@@ -1,6 +1,6 @@
 const express = require('express');
 const orderController = require('../controllers/order.controller');
-const { requireAuth } = require('../middlewares/auth.middleware');
+const { requireAuth, requireRole } = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -34,8 +34,8 @@ router.use(requireAuth);
  *       200:
  *         description: Success
  */
-// SECURITY FIX: Moved inside requireAuth scope. In production also add requireRole('admin').
-router.patch('/:id/status', orderController.updateOrderStatus);
+// SECURITY: Admin-only — only admins may mutate order status
+router.patch('/:id/status', requireRole('admin'), orderController.updateOrderStatus);
 
 /**
  * @swagger
@@ -53,7 +53,8 @@ router.post('/', orderController.createOrder);
  *     summary: Get all orders (Admin)
  *     tags: [Orders]
  */
-router.get('/all', orderController.getAllOrders);
+// SECURITY: Admin-only — lists all customers' orders
+router.get('/all', requireRole('admin'), orderController.getAllOrders);
 
 /**
  * @swagger
